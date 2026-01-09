@@ -28,11 +28,8 @@ app.use(
   cors({
     origin: [Env.FRONTEND_ORIGIN, 'https://mern-chat-app-seven-gamma.vercel.app'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 )
-app.options('*', cors())
 app.use(passport.initialize())
 
 app.get(
