@@ -1,3 +1,4 @@
+import * as cookie from 'cookie'
 import { Server as HTTPServer } from 'http'
 import jwt from 'jsonwebtoken'
 import { Server, type Socket } from 'socket.io'
@@ -21,24 +22,25 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     },
   })
 
-  io.use(async (socket: AuthenticatedSocket, next) => {
+  io.use((socket: AuthenticatedSocket, next) => {
     try {
       const rawCookie = socket.handshake.headers.cookie
-
-      if (!rawCookie) return next(new Error('Unauthorized'))
-
-      const token = rawCookie?.split('=')?.[1]?.trim()
-      if (!token) return next(new Error('Unauthorized'))
-
-      const decodedToken = jwt.verify(token, Env.JWT_SECRET) as {
-        userId: string
+      if (!rawCookie) {
+        return next(new Error('NO_COOKIE'))
       }
-      if (!decodedToken) return next(new Error('Unauthorized'))
 
-      socket.userId = decodedToken.userId
+      const cookies = cookie.parse(rawCookie)
+      const token = cookies.accessToken
+      if (!token) {
+        return next(new Error('NO_TOKEN'))
+      }
+
+      const decoded = jwt.verify(token, Env.JWT_SECRET) as { userId: string }
+      socket.userId = decoded.userId
+
       next()
-    } catch (error) {
-      next(new Error('Internal server error'))
+    } catch (err) {
+      next(new Error('INVALID_TOKEN'))
     }
   })
 
