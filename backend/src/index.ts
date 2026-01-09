@@ -24,12 +24,15 @@ initializeSocket(server)
 app.use(express.json({ limit: '10mb' }))
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
-app.use(
-  cors({
-    origin: [Env.FRONTEND_ORIGIN, 'https://mern-chat-app-seven-gamma.vercel.app'],
-    credentials: true,
-  }),
-)
+
+const corsOptions = {
+  origin: [Env.FRONTEND_ORIGIN, 'https://mern-chat-app-seven-gamma.vercel.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}
+
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 app.use(passport.initialize())
 
 app.get(
