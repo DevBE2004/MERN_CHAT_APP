@@ -1,5 +1,4 @@
 import cookieParser from 'cookie-parser'
-import cors from 'cors'
 import 'dotenv/config'
 import express, { Request, Response } from 'express'
 import http from 'http'
@@ -31,8 +30,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }
 
-app.use(cors(corsOptions))
-app.options('*', cors(corsOptions))
+// app.use(cors(corsOptions))
 app.use(passport.initialize())
 
 app.get(
