@@ -1,28 +1,27 @@
-import jwt from "jsonwebtoken";
-import { Response } from "express";
-import { Env } from "../config/env.config";
+import { Response } from 'express'
+import jwt from 'jsonwebtoken'
+import { Env } from '../config/env.config'
 
-type Time = `${number}${"s" | "m" | "h" | "d" | "w" | "y"}`;
+type Time = `${number}${'s' | 'm' | 'h' | 'd' | 'w' | 'y'}`
 type Cookie = {
-  res: Response;
-  userId: string;
-};
+  res: Response
+  userId: string
+}
 
 export const setJwtAuthCookie = ({ res, userId }: Cookie) => {
-  const payload = { userId };
-  const expiresIn = Env.JWT_EXPIRES_IN as Time;
+  const payload = { userId }
+  const expiresIn = Env.JWT_EXPIRES_IN as Time
   const token = jwt.sign(payload, Env.JWT_SECRET, {
-    audience: ["user"],
-    expiresIn: expiresIn || "7d",
-  });
+    audience: ['user'],
+    expiresIn: expiresIn || '7d',
+  })
 
-  return res.cookie("accessToken", token, {
+  return res.cookie('accessToken', token, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: Env.NODE_ENV === "production" ? true : false,
-    sameSite: Env.NODE_ENV === "production" ? "strict" : "lax",
-  });
-};
+    secure: Env.NODE_ENV === 'production' ? true : false,
+    sameSite: Env.NODE_ENV === 'production' ? 'none' : 'lax',
+  })
+}
 
-export const clearJwtAuthCookie = (res: Response) =>
-  res.clearCookie("accessToken", { path: "/" });
+export const clearJwtAuthCookie = (res: Response) => res.clearCookie('accessToken', { path: '/' })
