@@ -1,8 +1,10 @@
+import { createAdapter } from '@socket.io/redis-adapter'
 import * as cookie from 'cookie'
 import { Server as HTTPServer } from 'http'
 import jwt from 'jsonwebtoken'
 import { Server, type Socket } from 'socket.io'
 import { Env } from '../config/env.config'
+import { pubClient, subClient } from '../config/redis.config'
 import { validateChatParticipant } from '../services/chat.service'
 
 interface AuthenticatedSocket extends Socket {
@@ -11,7 +13,7 @@ interface AuthenticatedSocket extends Socket {
 
 let io: Server | null = null
 
-const onlineUsers = new Map<string, string>()
+const REDIS_ONLINE_KEY = 'online_users'
 
 export const initializeSocket = (httpServer: HTTPServer) => {
   io = new Server(httpServer, {
@@ -43,8 +45,10 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       next(new Error('INVALID_TOKEN'))
     }
   })
+  // Use Redis adapter for scaling
+  io.adapter(createAdapter(pubClient, subClient))
 
-  io.on('connection', (socket: AuthenticatedSocket) => {
+  io.on('connection', async (socket: AuthenticatedSocket) => {
     const userId = socket.userId!
     const newSocketId = socket.id
     if (!socket.userId) {
@@ -53,10 +57,11 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     }
 
     //register socket for the user
-    onlineUsers.set(userId, newSocketId)
+    await pubClient.hset(REDIS_ONLINE_KEY, userId, newSocketId)
 
     //BroadCast online users to all socket
-    io?.emit('online:users', Array.from(onlineUsers.keys()))
+    const allOnlineIds = await pubClient.hkeys(REDIS_ONLINE_KEY)
+    io?.emit('online:users', allOnlineIds)
 
     //create personnal room for user
     socket.join(`user:${userId}`)
@@ -80,17 +85,16 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       }
     })
 
-    socket.on('disconnect', () => {
-      if (onlineUsers.get(userId) === newSocketId) {
-        if (userId) onlineUsers.delete(userId)
+    socket.on('disconnect', async () => {
+      await pubClient.hdel(REDIS_ONLINE_KEY, userId)
 
-        io?.emit('online:users', Array.from(onlineUsers.keys()))
+      const currentOnlineUsers = await pubClient.hkeys(REDIS_ONLINE_KEY)
+      io?.emit('online:users', currentOnlineUsers)
 
-        console.log('socket disconnected', {
-          userId,
-          newSocketId,
-        })
-      }
+      console.log('socket disconnected', {
+        userId,
+        newSocketId,
+      })
     })
   })
 }
@@ -107,17 +111,17 @@ export const emitNewChatToParticpants = (participantIds: string[] = [], chat: an
   }
 }
 
-export const emitNewMessageToChatRoom = (
+export const emitNewMessageToChatRoom = async (
   senderId: string, //userId that sent the message
   chatId: string,
   message: any,
 ) => {
   const io = getIO()
-  const senderSocketId = onlineUsers.get(senderId?.toString())
+  const senderSocketId = await pubClient.hget(REDIS_ONLINE_KEY, senderId.toString())
 
   console.log(senderId, 'senderId')
   console.log(senderSocketId, 'sender socketid exist')
-  console.log('All online users:', Object.fromEntries(onlineUsers))
+  console.log('All online users:', await pubClient.hkeys(REDIS_ONLINE_KEY))
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`).except(senderSocketId).emit('message:new', message)
