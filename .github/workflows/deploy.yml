@@ -3,7 +3,6 @@ name: Build and Push Docker Image
 on:
   push:
     branches: ['master']
-    # Tối ưu: Chỉ chạy khi có thay đổi trong thư mục server
 
 jobs:
   build:
@@ -21,5 +20,5 @@ jobs:
       - name: Build and Push
         run: |
           # Build image với tag là 'latest'
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest ./server
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest
