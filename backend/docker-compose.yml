@@ -1,0 +1,68 @@
+services:
+  # ========================
+  # Node.js Backend
+  # ========================
+  backend:
+    build: .
+    container_name: chat_backend_app
+    restart: always
+    ports:
+      - '5000:5000'
+    env_file:
+      - .env
+    depends_on:
+      - mongo_db
+      - redis_db
+    networks:
+      - app_network
+
+  # ========================
+  # Redis
+  # ========================
+  redis_db:
+    image: redis:7-alpine
+    container_name: redis_storage
+    ports:
+      - '6379:6379'
+    logging:
+      driver: 'none'
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  # ========================
+  # MongoDB
+  # ========================
+  mongo_db:
+    image: mongo:7
+    container_name: mongo_storage
+    ports:
+      - '27017:27017'
+    command: ['mongod', '--quiet']
+    logging:
+      driver: 'none'
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: chat_app
+    networks:
+      - app_network
+
+# ========================
+# Networks
+# ========================
+networks:
+  app_network:
+
+# ========================
+# Volumes
+# ========================
+volumes:
+  mongo_data:
+  redis_data:
