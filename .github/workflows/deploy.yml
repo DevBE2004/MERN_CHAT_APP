@@ -33,7 +33,7 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           # Apply toàn bộ thư mục k8s (dùng kustomize)
-          kubectl apply -f k8s
+          kubectl apply -k k8s
 
           # Buộc các Pod phải restart để kéo image :latest mới nhất về
           kubectl rollout restart deployment backend-deployment
