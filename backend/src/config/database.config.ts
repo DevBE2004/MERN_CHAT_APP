@@ -23,7 +23,7 @@ const connectDatabase = async () => {
 
     await mongoose.connect(Env.MONGO_URI, dbOptions)
 
-    console.log('🍃 MongoDB: Connected to Cluster ✅')
+    console.log('MongoDB: Connected to Cluster')
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error)
   }

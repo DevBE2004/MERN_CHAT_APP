@@ -22,7 +22,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: chat-app-secrets
-                  key: MONGO_USER # Giả sử bạn đặt trong secret
+                  key: MONGO_USER
             - name: MONGO_INITDB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -32,7 +32,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo-service # Đây là DNS để Backend gọi tới
+  name: mongo-service
 spec:
   selector:
     app: mongodb

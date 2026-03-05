@@ -36,8 +36,7 @@ export const subClient = isCluster
 
 // 4. Sửa lỗi Typing cho handleEvents để nhận cả Redis và Cluster
 const handleEvents = (client: Redis | Cluster, name: string) => {
-  client.on('connect', () => console.log(`Redis ${name}: Connecting... 🔄`))
-  client.on('ready', () => console.log(`Redis ${name}: Ready! ✅`))
+  client.on('ready', () => console.log(`Redis ${name}: Ready!`))
   client.on('error', err => {
     // Nếu không phải lỗi cluster disabled thì log ra
     if (!err.message.includes('cluster support disabled')) {
