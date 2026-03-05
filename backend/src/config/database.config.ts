@@ -12,7 +12,6 @@ const dbOptions: ConnectOptions = {
   // Đảm bảo dữ liệu được ghi vào đa số các node (An toàn dữ liệu)
   writeConcern: { w: 'majority' },
 
-  // Tự động thử lại nếu mạng chập chờn
   retryWrites: true,
   retryReads: true,
 }
@@ -30,7 +29,6 @@ const connectDatabase = async () => {
   }
 }
 
-// Theo dõi các sự kiện của kết nối (Giống handleEvents của Redis)
 mongoose.connection.on('connected', () => console.log('MongoDB: Event - Connected'))
 mongoose.connection.on('error', err => console.error('MongoDB: Event - Error', err))
 mongoose.connection.on('disconnected', () => {

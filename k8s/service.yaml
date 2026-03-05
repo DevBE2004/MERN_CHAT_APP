@@ -1,0 +1,28 @@
+# --- FRONTEND SERVICE ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: chat-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+# --- BACKEND SERVICE ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  # Nếu bạn muốn gọi từ bên ngoài, đổi thành LoadBalancer
+  # Hiện tại đang để mặc định (ClusterIP) để gọi nội bộ
+  selector:
+    app: chat-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

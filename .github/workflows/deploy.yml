@@ -17,8 +17,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push
+      # --- PHẦN BACKEND ---
+      - name: Build and Push Backend
         run: |
-          # Build image với tag là 'latest'
           docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest
+
+      # --- PHẦN FRONTEND ---
+      - name: Build and Push Frontend
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest

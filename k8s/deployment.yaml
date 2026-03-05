@@ -1,3 +1,4 @@
+# --- BACKEND DEPLOYMENT ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,3 +28,24 @@ spec:
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 5
+---
+# --- FRONTEND DEPLOYMENT ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-frontend
+  template:
+    metadata:
+      labels:
+        app: chat-frontend
+    spec:
+      containers:
+        - name: frontend-container
+          image: leanhtu23131/chat-frontend:latest
+          ports:
+            - containerPort: 80
