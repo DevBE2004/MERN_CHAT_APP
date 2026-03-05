@@ -39,16 +39,10 @@ jobs:
       # --- DEPLOY ---
       - name: Deploy to Kubernetes
         run: |
-          # 1. Tạo file secret từ GitHub Secret để tránh commit mật khẩu lên Git
-          echo "${{ secrets.CHAT_APP_SECRETS }}" > k8s/secret.yaml
-
-          # 2. Apply cấu hình (đã có kustomization.yaml)
           kubectl apply -k k8s
 
-          # 3. Buộc restart để nhận Image và Secret mới nhất
           kubectl rollout restart deployment backend-deployment
           kubectl rollout restart deployment frontend-deployment
 
-          # 4. Kiểm tra trạng thái
           kubectl rollout status deployment backend-deployment
           kubectl rollout status deployment frontend-deployment
