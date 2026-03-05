@@ -26,5 +26,5 @@ jobs:
       # --- PHẦN FRONTEND ---
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./frontend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
