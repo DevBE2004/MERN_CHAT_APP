@@ -10,24 +10,21 @@ import connectDatabase from './config/database.config'
 import { Env } from './config/env.config'
 import './config/passport.config'
 import { mq } from './config/rabbitmq.config'
-import { pubClient } from './config/redis.config'
+import { pubClient, subClient } from './config/redis.config'
 import { logger } from './lib/monitor/logger'
 import { register } from './lib/monitor/metrics'
-import { initializeSocket } from './lib/socket'
 import { errorHandler } from './middlewares/errorHandler.middleware'
 import routes from './routes'
 
 const app = express()
 const server = http.createServer(app)
 
-//socket
-initializeSocket(server)
 app.use(express.json({ limit: '10mb' }))
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
 
 const corsOptions = {
-  origin: 'https://mern-chat-app-seven-gamma.vercel.app',
+  origin: [Env.FRONTEND_ORIGIN, 'https://mern-chat-app-seven-gamma.vercel.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }
@@ -70,6 +67,10 @@ app.use(errorHandler)
 
 server.listen(Env.PORT, async () => {
   await connectDatabase()
+  await pubClient.connect()
+  await subClient.connect()
   await mq.init(Env.AMQP_CLOUD)
+
+  initializeSocket(server)
   console.log(`Server running on port ${Env.PORT} in ${Env.NODE_ENV} mode`)
 })
