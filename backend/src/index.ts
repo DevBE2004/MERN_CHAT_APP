@@ -13,6 +13,7 @@ import { mq } from './config/rabbitmq.config'
 import { pubClient, subClient } from './config/redis.config'
 import { logger } from './lib/monitor/logger'
 import { register } from './lib/monitor/metrics'
+import { initializeSocket } from './lib/socket'
 import { errorHandler } from './middlewares/errorHandler.middleware'
 import routes from './routes'
 
