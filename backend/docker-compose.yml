@@ -57,6 +57,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq_storage
+    environment:
+      RABBITMQ_DEFAULT_USER: myuser
+      RABBITMQ_DEFAULT_PASS: mypassword
     ports:
       - '5672:5672' # Cổng kết nối AMQP
       - '15672:15672' # Cổng Management UI
