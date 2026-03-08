@@ -1,13 +1,14 @@
 import 'dotenv/config'
 import cloudinary from './config/cloudinary.config'
 import connectDatabase from './config/database.config'
+import { Env } from './config/env.config'
 import { mq } from './config/rabbitmq.config'
 import ChatModel from './models/chat.model'
 import MessageModel from './models/message.model'
 
 const startWorker = async () => {
   await connectDatabase()
-  await mq.init(process.env.AMQP_CLOUD!)
+  await mq.init(Env.AMQP_CLOUD!)
 
   console.log('Worker đang đợi tin nhắn...')
 
