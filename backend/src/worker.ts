@@ -6,7 +6,7 @@ import { mq } from './config/rabbitmq.config'
 import ChatModel from './models/chat.model'
 import MessageModel from './models/message.model'
 
-const startWorker = async () => {
+export const startWorker = async () => {
   await connectDatabase()
   await mq.init(Env.AMQP_CLOUD!)
 
