@@ -57,10 +57,10 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     }
 
     //register socket for the user
-    await pubClient.sadd(REDIS_ONLINE_KEY, userId, newSocketId)
+    await pubClient.hset(REDIS_ONLINE_KEY, userId, newSocketId)
 
     //BroadCast online users to all socket
-    const allOnlineIds = await pubClient.smembers(REDIS_ONLINE_KEY)
+    const allOnlineIds = await pubClient.hkeys(REDIS_ONLINE_KEY)
     io?.emit('online:users', allOnlineIds)
 
     //create personnal room for user
@@ -86,9 +86,9 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     })
 
     socket.on('disconnect', async () => {
-      await pubClient.srem(REDIS_ONLINE_KEY, userId)
+      await pubClient.hdel(REDIS_ONLINE_KEY, userId)
 
-      const currentOnlineUsers = await pubClient.smembers(REDIS_ONLINE_KEY)
+      const currentOnlineUsers = await pubClient.hkeys(REDIS_ONLINE_KEY)
       io?.emit('online:users', currentOnlineUsers)
 
       console.log('socket disconnected', {
