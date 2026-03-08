@@ -18,4 +18,7 @@ export const Env = {
   REDIS_MODE: getEnv('REDIS_MODE', 'standalone'),
   REDIS_HOST: getEnv('REDIS_HOST'),
   REDIS_PORT: getEnv('REDIS_PORT', '6379'),
+
+  // RabbitMQ
+  AMQP_CLOUD: getEnv('AMQP_CLOUD'),
 } as const

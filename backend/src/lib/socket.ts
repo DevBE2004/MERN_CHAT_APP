@@ -111,11 +111,7 @@ export const emitNewChatToParticpants = (participantIds: string[] = [], chat: an
   }
 }
 
-export const emitNewMessageToChatRoom = async (
-  senderId: string, //userId that sent the message
-  chatId: string,
-  message: any,
-) => {
+export const emitNewMessageToChatRoom = async (senderId: string, chatId: string, message: any) => {
   const io = getIO()
   const senderSocketId = await pubClient.hget(REDIS_ONLINE_KEY, senderId.toString())
 

@@ -49,3 +49,26 @@ spec:
           image: leanhtu23131/chat-frontend:latest
           ports:
             - containerPort: 80
+---
+# --- WORKER DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chat-worker
+  template:
+    metadata:
+      labels:
+        app: chat-worker
+    spec:
+      containers:
+        - name: worker-container
+          image: leanhtu23131/chat-backend:latest
+          command: ['node', 'dist/worker.js']
+          envFrom:
+            - secretRef:
+                name: chat-app-secrets

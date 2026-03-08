@@ -1,0 +1,41 @@
+import 'dotenv/config'
+import cloudinary from './config/cloudinary.config'
+import connectDatabase from './config/database.config'
+import { mq } from './config/rabbitmq.config'
+import ChatModel from './models/chat.model'
+import MessageModel from './models/message.model'
+
+const startWorker = async () => {
+  await connectDatabase()
+  await mq.init(process.env.AMQP_CLOUD!)
+
+  console.log('Worker đang đợi tin nhắn...')
+
+  await mq.consume(async (data, msg) => {
+    const { messageId, chatId, sender, content, image, replyToId } = data
+    let imageUrl = null
+
+    if (image) {
+      const uploadRes = await cloudinary.uploader.upload(image)
+      imageUrl = uploadRes.secure_url
+    }
+    const newMessage = await MessageModel.create({
+      _id: messageId,
+      chatId,
+      sender: sender._id,
+      content,
+      image: imageUrl,
+      replyTo: replyToId || null,
+    })
+
+    await ChatModel.findByIdAndUpdate(
+      chatId,
+      {
+        $set: { lastMessage: newMessage._id },
+      },
+      { new: true },
+    )
+  })
+}
+
+startWorker()

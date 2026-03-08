@@ -39,7 +39,7 @@ jobs:
       # --- DEPLOY ---
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -k k8s
+          kubectl apply -k k8s --validate=false
 
           kubectl rollout restart deployment backend-deployment
           kubectl rollout restart deployment frontend-deployment

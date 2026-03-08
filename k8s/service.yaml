@@ -18,8 +18,6 @@ kind: Service
 metadata:
   name: backend-service
 spec:
-  # Nếu bạn muốn gọi từ bên ngoài, đổi thành LoadBalancer
-  # Hiện tại đang để mặc định (ClusterIP) để gọi nội bộ
   selector:
     app: chat-backend
   ports:

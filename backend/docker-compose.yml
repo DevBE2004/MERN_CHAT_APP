@@ -54,6 +54,34 @@ services:
     networks:
       - app_network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_storage
+    ports:
+      - '5672:5672' # Cổng kết nối AMQP
+      - '15672:15672' # Cổng Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_network
+
+  # ========================
+  # Chat Worker (Service mới)
+  # ========================
+  chat_worker:
+    build: .
+    container_name: chat_worker_app
+    restart: always
+    command: node dist/worker.js
+    env_file:
+      - .env
+    depends_on:
+      - mongo_db
+      - redis_db
+      - rabbitmq
+    networks:
+      - app_network
+
 # ========================
 # Networks
 # ========================
@@ -66,3 +94,4 @@ networks:
 volumes:
   mongo_data:
   redis_data:
+  rabbitmq_data:
