@@ -27,7 +27,7 @@ app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
 
 const corsOptions = {
-  origin: [Env.FRONTEND_ORIGIN, 'https://mern-chat-app-seven-gamma.vercel.app'],
+  origin: Env.FRONTEND_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }
