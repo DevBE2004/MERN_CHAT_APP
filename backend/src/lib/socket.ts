@@ -57,10 +57,10 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     }
 
     //register socket for the user
-    await pubClient.hset(REDIS_ONLINE_KEY, userId, newSocketId)
+    await pubClient.set(`${REDIS_ONLINE_KEY}:${userId}`, newSocketId)
 
-    //BroadCast online users to all socket
-    const allOnlineIds = await pubClient.hkeys(REDIS_ONLINE_KEY)
+    const keys = await pubClient.keys(`${REDIS_ONLINE_KEY}:*`)
+    const allOnlineIds = keys.map(k => k.replace(`${REDIS_ONLINE_KEY}:`, ''))
     io?.emit('online:users', allOnlineIds)
 
     //create personnal room for user
@@ -86,9 +86,14 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     })
 
     socket.on('disconnect', async () => {
-      await pubClient.hdel(REDIS_ONLINE_KEY, userId)
+      const currentStoredSocketId = await pubClient.get(`${REDIS_ONLINE_KEY}:${userId}`)
 
-      const currentOnlineUsers = await pubClient.hkeys(REDIS_ONLINE_KEY)
+      if (currentStoredSocketId === newSocketId) {
+        await pubClient.del(`${REDIS_ONLINE_KEY}:${userId}`)
+      }
+
+      const keys = await pubClient.keys(`${REDIS_ONLINE_KEY}:*`)
+      const currentOnlineUsers = keys.map(k => k.replace(`${REDIS_ONLINE_KEY}:`, ''))
       io?.emit('online:users', currentOnlineUsers)
 
       console.log('socket disconnected', {
@@ -113,11 +118,12 @@ export const emitNewChatToParticpants = (participantIds: string[] = [], chat: an
 
 export const emitNewMessageToChatRoom = async (senderId: string, chatId: string, message: any) => {
   const io = getIO()
-  const senderSocketId = await pubClient.hget(REDIS_ONLINE_KEY, senderId.toString())
+
+  const senderSocketId = await pubClient.get(`${REDIS_ONLINE_KEY}:${senderId}`)
 
   console.log(senderId, 'senderId')
   console.log(senderSocketId, 'sender socketid exist')
-  console.log('All online users:', await pubClient.hkeys(REDIS_ONLINE_KEY))
+  console.log('All online users:', await pubClient.keys(REDIS_ONLINE_KEY))
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`).except(senderSocketId).emit('message:new', message)
