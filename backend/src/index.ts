@@ -16,7 +16,6 @@ import { register } from './lib/monitor/metrics'
 import { initializeSocket } from './lib/socket'
 import { errorHandler } from './middlewares/errorHandler.middleware'
 import routes from './routes'
-import { startWorker } from './worker'
 
 const app = express()
 const server = http.createServer(app)
@@ -72,6 +71,5 @@ app.use(errorHandler)
 server.listen(Env.PORT, async () => {
   await connectDatabase()
   await mq.init(Env.AMQP_CLOUD)
-  startWorker()
   console.log(`Server running on port ${Env.PORT} in ${Env.NODE_ENV} mode`)
 })

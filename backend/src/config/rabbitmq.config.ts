@@ -25,7 +25,7 @@ class RabbitMQService {
         } catch (error) {
           console.error('Xử lý thất bại, đang nack tin nhắn...', error)
           // Nack (Negative Acknowledge) để tin nhắn quay lại hàng đợi
-          // this.channel.nack(msg, false, true)
+          this.channel.nack(msg, false, true)
         }
       }
     })
