@@ -1,15 +1,15 @@
-import mongoose, { Document, Schema } from "mongoose";
-import { compareValue, hashValue } from "../utils/bcrypt";
+import mongoose, { Document, Schema } from 'mongoose'
+import { compareValue, hashValue } from '../utils/bcrypt'
 
 export interface UserDocument extends Document {
-  name: string;
-  email?: string;
-  password?: string;
-  avatar?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  name: string
+  email?: string
+  password?: string
+  avatar?: string | null
+  createdAt: Date
+  updatedAt: Date
 
-  comparePassword(value: string): Promise<boolean>;
+  comparePassword(value: string): Promise<boolean>
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -33,24 +33,25 @@ const userSchema = new Schema<UserDocument>(
     toJSON: {
       transform: (doc, ret) => {
         if (ret) {
-          delete (ret as any).password;
+          delete (ret as any).password
         }
-        return ret;
+        return ret
       },
     },
-  }
-);
+  },
+)
+userSchema.index({ name: 1 })
 
-userSchema.pre("save", async function (next) {
-  if (this.password && this.isModified("password")) {
-    this.password = await hashValue(this.password);
+userSchema.pre('save', async function (next) {
+  if (this.password && this.isModified('password')) {
+    this.password = await hashValue(this.password)
   }
-  next();
-});
+  next()
+})
 
 userSchema.methods.comparePassword = async function (val: string) {
-  return compareValue(val, this.password);
-};
+  return compareValue(val, this.password)
+}
 
-const UserModel = mongoose.model<UserDocument>("User", userSchema);
-export default UserModel;
+const UserModel = mongoose.model<UserDocument>('User', userSchema)
+export default UserModel

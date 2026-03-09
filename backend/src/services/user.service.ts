@@ -1,13 +1,13 @@
-import UserModel from "../models/user.model";
+import UserModel from '../models/user.model'
 
 export const findByIdUserService = async (userId: string) => {
-  return await UserModel.findById(userId);
-};
+  return await UserModel.findById(userId).lean()
+}
 
 export const getUsersService = async (userId: string) => {
-  const users = await UserModel.find({ _id: { $ne: userId } }).select(
-    "-password"
-  );
+  const users = await UserModel.find({ _id: { $ne: userId } })
+    .select('-passsword')
+    .lean()
 
-  return users;
-};
+  return users
+}

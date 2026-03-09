@@ -65,13 +65,20 @@ const ChatList = () => {
     }
   }, [socket, updateChatLastMessage])
 
+  const handleOnClickNotification = (chatId: string) => {
+    navigate(`/chat/${chatId}`)
+  }
+
   useEffect(() => {
     if (!socket) return
 
     const handleNotification = (data: NotificationType) => {
       if (data.chatId !== chatId) {
         toast(
-          <div className='flex items-center gap-3'>
+          <div
+            className='flex items-center gap-3'
+            onClick={() => handleOnClickNotification(data.chatId)}
+          >
             <AvatarWithBadge name={data.sender.name} src={data.sender.avatar} />
             <div className='flex flex-col'>
               <span className='font-semibold text-sm'>{data.sender.name}</span>
