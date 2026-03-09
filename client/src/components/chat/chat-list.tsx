@@ -4,7 +4,7 @@ import { useChat } from '@/hooks/use-chat'
 import useChatId from '@/hooks/use-chat-id'
 import { useSocket } from '@/hooks/use-socket'
 import type { ChatType, NotificationType } from '@/types/chat.type'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { MessageType } from '../../types/chat.type'
@@ -65,10 +65,12 @@ const ChatList = () => {
     }
   }, [socket, updateChatLastMessage])
 
-  const handleOnClickNotification = (chatId: string) => {
-    navigate(`/chat/${chatId}`)
-  }
-
+  const handleOnClickNotification = useCallback(
+    (chatId: string) => {
+      navigate(`/chat/${chatId}`)
+    },
+    [navigate],
+  )
   useEffect(() => {
     if (!socket) return
 
@@ -94,7 +96,7 @@ const ChatList = () => {
     return () => {
       socket.off('notification:new', handleNotification)
     }
-  }, [socket, chatId])
+  }, [socket, chatId, handleOnClickNotification])
 
   const onRoute = (id: string) => {
     navigate(`/chat/${id}`)
