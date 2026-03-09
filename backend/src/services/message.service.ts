@@ -1,6 +1,10 @@
 import mongoose from 'mongoose'
 import { mq } from '../config/rabbitmq.config'
-import { emitLastMessageToParticipants, emitNewMessageToChatRoom } from '../lib/socket'
+import {
+  emitLastMessageToParticipants,
+  emitNewMessageToChatRoom,
+  emitNotificationToUsers,
+} from '../lib/socket'
 import ChatModel from '../models/chat.model'
 import MessageModel from '../models/message.model'
 import UserModel from '../models/user.model'
@@ -57,6 +61,19 @@ export const sendMessageService = async (
   //websocket emit the lastmessage to members (personnal room user)
   const allParticipantIds = chat.participants.map(id => id.toString())
   emitLastMessageToParticipants(allParticipantIds, chatId, optimisticMessage)
+
+  const payload = {
+    type: 'message',
+    chatId,
+    sender: {
+      _id: userId,
+      name: senderInfo?.name,
+      avatar: senderInfo?.avatar,
+    },
+    messagePreview: optimisticMessage.content,
+  }
+
+  emitNotificationToUsers(allParticipantIds, payload)
 
   await mq.send(optimisticMessage)
 

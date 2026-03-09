@@ -144,3 +144,11 @@ export const emitLastMessageToParticipants = (
     io.to(`user:${participantId}`).emit('chat:update', payload)
   }
 }
+
+export const emitNotificationToUsers = (participantIds: string[], payload: any) => {
+  const io = getIO()
+  console.log('emit notification to:', participantIds)
+  participantIds.forEach(participantId => {
+    io.to(`user:${participantId}`).emit('notification:new', payload)
+  })
+}
