@@ -69,7 +69,7 @@ services:
       - app_network
 
   # ========================
-  # Chat Worker (Service mới)
+  # Chat Worker
   # ========================
   chat_worker:
     build: .

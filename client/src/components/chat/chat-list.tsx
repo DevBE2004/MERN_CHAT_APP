@@ -78,7 +78,7 @@ const ChatList = () => {
       if (data.chatId !== chatId) {
         toast(
           <div
-            className='flex items-center gap-3'
+            className='flex items-center gap-3 cursor-pointer'
             onClick={() => handleOnClickNotification(data.chatId)}
           >
             <AvatarWithBadge name={data.sender.name} src={data.sender.avatar} />
