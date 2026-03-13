@@ -14,7 +14,7 @@ passport.use(
           return token
         },
       ]),
-      secretOrKey: Env.JWT_SECRET,
+      secretOrKey: Env.SECRET_KEY,
       audience: ['user'],
       algorithms: ['HS256'],
     },

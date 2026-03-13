@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { Server, type Socket } from 'socket.io'
 import { Env } from '../config/env.config'
 import { pubClient, subClient } from '../config/redis.config'
+import UserModel from '../models/user.model'
 import { validateChatParticipant } from '../services/chat.service'
 
 interface AuthenticatedSocket extends Socket {
@@ -37,7 +38,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
         return next(new Error('NO_TOKEN'))
       }
 
-      const decoded = jwt.verify(token, Env.JWT_SECRET) as { userId: string }
+      const decoded = jwt.verify(token, Env.SECRET_KEY) as { userId: string }
       socket.userId = decoded.userId
 
       next()
@@ -83,6 +84,32 @@ export const initializeSocket = (httpServer: HTTPServer) => {
         socket.leave(`chat:${chatId}`)
         console.log(`User ${userId} left room chat:${chatId}`)
       }
+    })
+    //call
+    socket.on('call:start', async ({ chatId, peerId }: { chatId: string; peerId: string }) => {
+      const user = await UserModel.findById(socket.userId).select('name avatar')
+      socket.to(`chat:${chatId}`).emit('call:incoming', {
+        chatId,
+        peerId,
+        callerName: user?.name,
+        callerAvatar: user?.avatar,
+      })
+    })
+    socket.on('call:accept', ({ chatId, peerId }: { chatId: string; peerId: string }) => {
+      socket.to(`chat:${chatId}`).emit('call:accepted', {
+        chatId,
+        peerId,
+      })
+    })
+    socket.on('call:reject', ({ chatId }: { chatId: string }) => {
+      socket.to(`chat:${chatId}`).emit('call:rejected', {
+        chatId,
+      })
+    })
+    socket.on('call:end', ({ chatId }: { chatId: string }) => {
+      socket.to(`chat:${chatId}`).emit('call:ended', {
+        chatId,
+      })
     })
 
     socket.on('disconnect', async () => {

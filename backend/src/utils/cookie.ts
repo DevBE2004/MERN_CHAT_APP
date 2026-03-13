@@ -11,7 +11,7 @@ type Cookie = {
 export const setJwtAuthCookie = ({ res, userId }: Cookie) => {
   const payload = { userId }
   const expiresIn = Env.JWT_EXPIRES_IN as Time
-  const token = jwt.sign(payload, Env.JWT_SECRET, {
+  const token = jwt.sign(payload, Env.SECRET_KEY, {
     audience: ['user'],
     expiresIn: expiresIn || '7d',
   })

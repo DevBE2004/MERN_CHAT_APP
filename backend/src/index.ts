@@ -9,6 +9,7 @@ import passport from 'passport'
 import connectDatabase from './config/database.config'
 import { Env } from './config/env.config'
 import './config/passport.config'
+import { initPeerServer } from './config/peer.config'
 import { mq } from './config/rabbitmq.config'
 import { pubClient } from './config/redis.config'
 import { logger } from './lib/monitor/logger'
@@ -64,11 +65,13 @@ createTerminus(server, {
   },
 })
 
+connectDatabase()
+mq.init(Env.AMQP_CLOUD)
+initPeerServer(app, server)
+initializeSocket(server)
+
 app.use(errorHandler)
 
 server.listen(Env.PORT, async () => {
-  await connectDatabase()
-  await mq.init(Env.AMQP_CLOUD)
-  initializeSocket(server)
   console.log(`Server running on port ${Env.PORT} in ${Env.NODE_ENV} mode`)
 })
