@@ -35,7 +35,8 @@ export const protectedRoutesPaths = [
     path: PROTECTED_ROUTES.SINGLE_CHAT,
     element: <SingleChat />,
   },
-
+]
+export const videoPaths = [
   {
     path: PROTECTED_ROUTES.VIDEO_ID,
     element: <VideoCallChat />,
