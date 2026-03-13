@@ -24,3 +24,7 @@ export const getMediaStream = async (
     throw error
   }
 }
+export const getAudioOutputDevices = async () => {
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  return devices.filter(device => device.kind === 'audiooutput')
+}

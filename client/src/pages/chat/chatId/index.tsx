@@ -21,12 +21,17 @@ const SingleChat = () => {
 
   const [replyTo, setReplyTo] = useState<MessageType | null>(null)
 
-  const [incomingCall, setIncomingCall] = useState<{
-    chatId: string
-    peerId: string
-    callerName: string
-    callerAvatar: string
-  } | null>(null)
+  const [activeCalls, setActiveCalls] = useState<
+    Record<
+      string,
+      {
+        chatId: string
+        peerId: string
+        callerName: string
+        callerAvatar: string
+      }
+    >
+  >({})
 
   const currentUserId = user?._id || null
   const chat = singleChat?.chat
@@ -49,35 +54,40 @@ const SingleChat = () => {
       callerName: string
       callerAvatar: string
     }) => {
-      setIncomingCall(data)
+      setActiveCalls(prev => ({
+        ...prev,
+        [data.peerId]: data,
+      }))
     }
-
     socket.on('call:incoming', handleIncomingCall)
 
     return () => {
-      socket.emit('chat:leave', chatId)
       socket.off('call:incoming', handleIncomingCall)
     }
   }, [chatId, socket])
 
-  const handleAccept = () => {
-    if (!incomingCall) return
-
+  const handleAccept = (call: { chatId: string; peerId: string }) => {
     socket?.emit('call:accept', {
-      chatId: incomingCall.chatId,
+      chatId: call.chatId,
+      peerId: call.peerId,
     })
 
-    navigate(`/video/${incomingCall.chatId}`)
+    navigate(`/video/${call.chatId}`)
+
+    setActiveCalls(prev => {
+      const next = { ...prev }
+      delete next[call.peerId]
+      return next
+    })
   }
 
-  const handleReject = () => {
-    if (!incomingCall) return
-
-    socket?.emit('call:reject', {
-      chatId: incomingCall.chatId,
+  const handleReject = (peerId: string) => {
+    socket?.emit('call:reject', { chatId })
+    setActiveCalls(prev => {
+      const next = { ...prev }
+      delete next[peerId]
+      return next
     })
-
-    setIncomingCall(null)
   }
 
   if (isSingleChatLoading) {
@@ -99,7 +109,6 @@ const SingleChat = () => {
   return (
     <div className='relative h-svh flex flex-col'>
       <ChatHeader chat={chat} currentUserId={currentUserId} />
-
       <div className='flex-1 overflow-y-auto bg-background'>
         {messages.length === 0 ? (
           <EmptyState
@@ -110,21 +119,22 @@ const SingleChat = () => {
           <ChatBody chatId={chatId} messages={messages} onReply={setReplyTo} />
         )}
       </div>
-
       <ChatFooter
         replyTo={replyTo}
         chatId={chatId}
         currentUserId={currentUserId}
         onCancelReply={() => setReplyTo(null)}
       />
-      {incomingCall && (
+
+      {Object.values(activeCalls).map(call => (
         <IncomingCallModal
-          callerName={incomingCall?.callerName}
-          callerAvatar={incomingCall?.callerAvatar}
-          onAccept={handleAccept}
-          onReject={handleReject}
+          key={call.peerId}
+          callerName={call.callerName}
+          callerAvatar={call.callerAvatar}
+          onAccept={() => handleAccept(call)}
+          onReject={() => handleReject(call.peerId)}
         />
-      )}
+      ))}
     </div>
   )
 }
