@@ -105,7 +105,6 @@ const VideoCallChat = () => {
         className='absolute bottom-24 right-4 w-32 h-44 sm:w-40 sm:h-52 object-cover rounded-xl border border-white/20'
       />
 
-      {/* end call button */}
       <button
         onClick={endCall}
         className='absolute bottom-8 bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full shadow-lg'
