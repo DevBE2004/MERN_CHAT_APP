@@ -17,18 +17,20 @@ const VideoCallChat = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
 
   // lấy audio
   useEffect(() => {
     getMediaStream().then(s => {
+      streamRef.current = s
       setStream(s)
       if (localVideoRef.current) localVideoRef.current.srcObject = s
       navigator.mediaDevices
         .enumerateDevices()
         .then(devices => setOutputDevices(devices.filter(d => d.kind === 'audiooutput')))
     })
-    return () => stream?.getTracks().forEach(t => t.stop())
+    return () => streamRef.current?.getTracks().forEach(t => t.stop())
   }, [])
 
   useEffect(() => {

@@ -10,6 +10,7 @@ const VideoPlayer = ({
   devices: MediaDeviceInfo[]
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
+  console.log(peerId)
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.srcObject = stream
