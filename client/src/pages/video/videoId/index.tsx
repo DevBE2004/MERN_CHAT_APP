@@ -15,30 +15,42 @@ const VideoCallChat = () => {
   const { socket } = useSocket()
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
+
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
   const [stream, setStream] = useState<MediaStream | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([])
 
-  // lấy audio
+  // get media
   useEffect(() => {
     getMediaStream().then(s => {
       streamRef.current = s
       setStream(s)
-      if (localVideoRef.current) localVideoRef.current.srcObject = s
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = s
+      }
+
       navigator.mediaDevices
         .enumerateDevices()
         .then(devices => setOutputDevices(devices.filter(d => d.kind === 'audiooutput')))
     })
+
     return () => streamRef.current?.getTracks().forEach(t => t.stop())
   }, [])
 
   useEffect(() => {
     if (!peer || !stream) return
+
     peer.on('call', call => {
       call.answer(stream)
+
       call.on('stream', remoteStream => {
-        setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
+        setRemoteStreams(prev => ({
+          ...prev,
+          [call.peer]: remoteStream,
+        }))
       })
 
       call.on('close', () => {
@@ -59,34 +71,44 @@ const VideoCallChat = () => {
 
   const endCall = () => {
     socket?.emit('call:end', { chatId })
+
     stream?.getTracks().forEach(track => track.stop())
 
     if (peer) {
       peer.disconnect()
       peer.destroy()
     }
+
     setRemoteStreams({})
     navigate('/chat/' + chatId)
   }
-  return (
-    <div className='w-full h-screen bg-black flex flex-col items-center justify-center gap-4'>
-      <div className='flex gap-4 flex-wrap'>
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          className='w-80 h-60 object-cover rounded-lg bg-gray-800'
-        />
 
+  return (
+    <div className='fixed inset-0 bg-black flex items-center justify-center'>
+      <div className='grid grid-cols-2 gap-2 w-full h-full'>
         {Object.entries(remoteStreams).map(([pId, rStream]) => (
-          <VideoPlayer key={pId} peerId={pId} stream={rStream} devices={outputDevices} />
+          <VideoPlayer
+            key={pId}
+            peerId={pId}
+            stream={rStream}
+            devices={outputDevices}
+            className='w-full h-40 sm:h-60'
+          />
         ))}
       </div>
 
+      <video
+        ref={localVideoRef}
+        autoPlay
+        muted
+        playsInline
+        className='absolute bottom-24 right-4 w-32 h-44 sm:w-40 sm:h-52 object-cover rounded-xl border border-white/20'
+      />
+
+      {/* end call button */}
       <button
-        className='bg-red-500 hover:bg-red-600 px-6 py-2 rounded text-white'
         onClick={endCall}
+        className='absolute bottom-8 bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full shadow-lg'
       >
         Kết thúc
       </button>
