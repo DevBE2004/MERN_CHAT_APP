@@ -39,7 +39,7 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
             </p>
           </div>
         </div>
-        <div>
+        {/* <div>
           <div
             className={`flex-1
             text-center
@@ -51,7 +51,7 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
           >
             Chat
           </div>
-        </div>
+        </div> */}
       </div>
       <button className='mx-5' onClick={() => navigate(`/video/${chat._id}`)}>
         <PhoneCall size={20} />

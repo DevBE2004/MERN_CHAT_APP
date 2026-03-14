@@ -63,9 +63,10 @@ const VideoCallChat = () => {
           return next
         })
       })
+      console.log('đã chạy call video')
     })
   }, [peer, stream])
-
+  console.log(remoteStreams)
   /* -------------------- START / ACCEPT CALL -------------------- */
   useEffect(() => {
     if (!socket || !peer || !stream || !isPeerReady) return
