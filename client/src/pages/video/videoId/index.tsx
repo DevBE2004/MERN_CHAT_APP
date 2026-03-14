@@ -151,10 +151,9 @@ const VideoCallChat = () => {
   }, [socket, chatId, stream, peer, navigate])
 
   /* -------------------- UI -------------------- */
-
+  console.log({ localVideoRef, remoteStreams })
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
-      {/* Remote videos */}
       <div className='grid w-full h-full gap-2 p-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
         {Object.keys(remoteStreams).length === 0 && (
           <div className='flex items-center justify-center text-white text-xl'>Đang gọi...</div>
@@ -165,7 +164,6 @@ const VideoCallChat = () => {
         ))}
       </div>
 
-      {/* Local video */}
       <video
         data-local
         ref={localVideoRef}
