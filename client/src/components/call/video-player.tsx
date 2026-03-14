@@ -8,6 +8,7 @@ interface Props {
 
 const VideoPlayer = ({ stream, peerId, className }: Props) => {
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  console.log(peerId)
 
   const setVideoRef = (node: HTMLVideoElement | null) => {
     videoRef.current = node
