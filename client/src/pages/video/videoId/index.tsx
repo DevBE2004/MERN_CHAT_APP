@@ -23,9 +23,9 @@ const VideoCallChat = () => {
   const streamRef = useRef<MediaStream | null>(null)
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
 
-  const [micEnabled, setMicEnabled] = useState(true)
-  const [camEnabled, setCamEnabled] = useState(true)
-  const [speakerEnabled, setSpeakerEnabled] = useState(true)
+  const [micEnabled, setMicEnabled] = useState(false)
+  const [camEnabled, setCamEnabled] = useState(false)
+  const [speakerEnabled, setSpeakerEnabled] = useState(false)
 
   /* -------------------- GET MEDIA -------------------- */
   useEffect(() => {
@@ -142,10 +142,16 @@ const VideoCallChat = () => {
 
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
-      <div className='grid w-full h-full gap-2 p-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='absolute inset-0 z-0'>
         {Object.entries(remoteStreams).map(([pId, rStream]) => (
           <VideoPlayer key={pId} peerId={pId} stream={rStream} className='w-full h-full' />
         ))}
+
+        {Object.keys(remoteStreams).length === 0 && (
+          <div className='flex items-center justify-center h-full text-white/50'>
+            Đang chờ kết nối...
+          </div>
+        )}
       </div>
 
       <video
@@ -154,9 +160,8 @@ const VideoCallChat = () => {
         autoPlay
         muted
         playsInline
-        className='absolute bottom-28 right-4 w-32 h-44 sm:w-40 sm:h-52 object-cover rounded-xl border border-white/20 shadow-lg'
+        className='absolute bottom-28 right-4 w-40 h-52 md:w-60 md:h-80 object-cover rounded-xl border-2 border-white/20 shadow-2xl z-10'
       />
-
       {/* Controls */}
       <div
         className='
