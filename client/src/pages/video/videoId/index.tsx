@@ -18,7 +18,8 @@ const VideoCallChat = () => {
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
 
-  const [stream, setStream] = useState<MediaStream | null>(null)
+  // Dùng ref để đảm bảo stream luôn có giá trị mới nhất cho các callback của PeerJS
+  const streamRef = useRef<MediaStream | null>(null)
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
 
   const [micEnabled, setMicEnabled] = useState(true)
@@ -26,37 +27,30 @@ const VideoCallChat = () => {
   const [speakerEnabled, setSpeakerEnabled] = useState(true)
 
   /* -------------------- GET MEDIA -------------------- */
-
   useEffect(() => {
     getMediaStream().then(s => {
-      setStream(s)
-
+      streamRef.current = s
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = s
       }
     })
 
     return () => {
-      stream?.getTracks().forEach(t => t.stop())
+      streamRef.current?.getTracks().forEach(t => t.stop())
     }
   }, [])
 
   /* -------------------- RECEIVE CALL -------------------- */
-
   useEffect(() => {
-    if (!peer || !stream) return
+    if (!peer) return
 
     peer.on('call', call => {
-      if (stream) {
-        call.answer(stream)
-        call.on('stream', remoteStream => {
-          setRemoteStreams(prev => ({
-            ...prev,
-            [call.peer]: remoteStream,
-          }))
-        })
+      if (streamRef.current) {
+        call.answer(streamRef.current)
       }
-
+      call.on('stream', remoteStream => {
+        setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
+      })
       call.on('close', () => {
         setRemoteStreams(prev => {
           const next = { ...prev }
@@ -65,10 +59,12 @@ const VideoCallChat = () => {
         })
       })
     })
-  }, [peer, stream])
+  }, [peer])
+
   /* -------------------- START / ACCEPT CALL -------------------- */
   useEffect(() => {
-    if (!socket || !peer || !stream || !isPeerReady) return
+    // Chỉ thực hiện khi peer đã sẵn sàng
+    if (!socket || !isPeerReady) return
 
     const params = new URLSearchParams(window.location.search)
     const callerPeerId = params.get('callerPeerId')
@@ -78,23 +74,19 @@ const VideoCallChat = () => {
     } else {
       socket.emit('call:start', { chatId, peerId })
     }
-  }, [isPeerReady, stream])
+  }, [isPeerReady, socket])
 
   /* -------------------- SOCKET EVENTS -------------------- */
   useEffect(() => {
-    if (!socket || !peer || !stream) return
+    if (!socket || !peer) return
 
     const handleAccepted = ({ peerId: remotePeerId }: { peerId: string }) => {
-      console.log('Đối phương đã chấp nhận, tiến hành gọi Peer tới:', remotePeerId)
-
-      const call = peer.call(remotePeerId, stream)
-
-      call.on('stream', remoteStream => {
-        setRemoteStreams(prev => ({
-          ...prev,
-          [remotePeerId]: remoteStream,
-        }))
-      })
+      if (streamRef.current) {
+        const call = peer.call(remotePeerId, streamRef.current)
+        call.on('stream', remoteStream => {
+          setRemoteStreams(prev => ({ ...prev, [remotePeerId]: remoteStream }))
+        })
+      }
     }
 
     socket.on('call:accepted', handleAccepted)
@@ -106,59 +98,43 @@ const VideoCallChat = () => {
       socket.off('call:rejected')
       socket.off('call:ended')
     }
-  }, [socket, peer, stream])
+  }, [socket, peer])
 
   /* -------------------- CONTROLS -------------------- */
-
   const toggleMic = () => {
-    if (!stream) return
-    stream.getAudioTracks().forEach(track => {
-      track.enabled = !track.enabled
-      setMicEnabled(track.enabled)
+    streamRef.current?.getAudioTracks().forEach(t => {
+      t.enabled = !t.enabled
+      setMicEnabled(t.enabled)
     })
   }
 
   const toggleCamera = () => {
-    if (!stream) return
-    stream.getVideoTracks().forEach(track => {
-      track.enabled = !track.enabled
-      setCamEnabled(track.enabled)
+    streamRef.current?.getVideoTracks().forEach(t => {
+      t.enabled = !t.enabled
+      setCamEnabled(t.enabled)
     })
   }
 
   const toggleSpeaker = () => {
     const newState = !speakerEnabled
     setSpeakerEnabled(newState)
-
     document.querySelectorAll('video').forEach(v => {
-      if (!v.hasAttribute('data-local')) {
-        v.muted = !newState
-      }
+      if (!v.hasAttribute('data-local')) v.muted = !newState
     })
   }
 
   const endCall = useCallback(() => {
     socket?.emit('call:end', { chatId })
-
-    stream?.getTracks().forEach(t => t.stop())
-
-    peer?.disconnect()
+    streamRef.current?.getTracks().forEach(t => t.stop())
     peer?.destroy()
-
-    setRemoteStreams({})
-
     navigate('/chat/' + chatId)
-  }, [socket, chatId, stream, peer, navigate])
+  }, [socket, chatId, peer, navigate])
 
   /* -------------------- UI -------------------- */
 
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
       <div className='grid w-full h-full gap-2 p-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
-        {Object.keys(remoteStreams).length === 0 && (
-          <div className='flex items-center justify-center text-white text-xl'>Đang gọi...</div>
-        )}
-
         {Object.entries(remoteStreams).map(([pId, rStream]) => (
           <VideoPlayer key={pId} peerId={pId} stream={rStream} className='w-full h-full' />
         ))}
@@ -170,14 +146,7 @@ const VideoCallChat = () => {
         autoPlay
         muted
         playsInline
-        className='
-        absolute bottom-28 right-4
-        w-32 h-44 sm:w-40 sm:h-52
-        object-cover
-        rounded-xl
-        border border-white/20
-        shadow-lg
-        '
+        className='absolute bottom-28 right-4 w-32 h-44 sm:w-40 sm:h-52 object-cover rounded-xl border border-white/20 shadow-lg'
       />
 
       {/* Controls */}

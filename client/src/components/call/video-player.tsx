@@ -14,21 +14,21 @@ const VideoPlayer = ({ stream, peerId, className }: Props) => {
     const video = videoRef.current
     if (video && stream) {
       video.srcObject = stream
-
-      // Quan trọng: Chỉ gọi play sau khi metadata đã load
-      video.onloadedmetadata = () => {
-        video.play().catch(e => console.error('Video play error:', e))
-      }
-    }
-
-    return () => {
-      if (video) video.srcObject = null
+      // Thêm play() trực tiếp nếu metadata đã có
+      video.play().catch(e => console.warn('Autoplay prevented, retrying...', e))
     }
   }, [stream])
 
   return (
     <div className={`relative overflow-hidden rounded-xl border bg-black ${className}`}>
-      <video ref={videoRef} autoPlay playsInline muted className='w-full h-full object-cover' />
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className='w-full h-full object-cover'
+        onCanPlay={() => videoRef.current?.play()}
+      />
     </div>
   )
 }
