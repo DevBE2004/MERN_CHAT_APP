@@ -8,27 +8,20 @@ interface Props {
 
 const VideoPlayer = ({ stream, peerId, className }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null)
-  console.log(peerId)
 
   useEffect(() => {
-    const video = videoRef.current
-    if (video && stream) {
-      video.srcObject = stream
-      // Thêm play() trực tiếp nếu metadata đã có
-      video.play().catch(e => console.warn('Autoplay prevented, retrying...', e))
+    if (videoRef.current && stream) {
+      console.log(`Gán stream cho ${peerId}`)
+      videoRef.current.srcObject = stream
+      // Thêm đoạn này để ép trình duyệt nhận diện luồng
+      videoRef.current.load()
+      videoRef.current.play().catch(e => console.error('Play error:', e))
     }
   }, [stream])
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border bg-black ${className}`}>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className='w-full h-full object-cover'
-        onCanPlay={() => videoRef.current?.play()}
-      />
+    <div className={className}>
+      <video ref={videoRef} autoPlay playsInline muted className='w-full h-full object-cover' />
     </div>
   )
 }

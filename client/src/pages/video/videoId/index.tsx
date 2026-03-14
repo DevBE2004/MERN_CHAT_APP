@@ -47,10 +47,15 @@ const VideoCallChat = () => {
     peer.on('call', call => {
       if (streamRef.current) {
         call.answer(streamRef.current)
+
+        call.on('stream', remoteStream => {
+          console.log('Đã nhận được remote stream từ:', call.peer)
+          console.log('Remote tracks:', remoteStream.getTracks())
+          setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
+        })
+      } else {
+        console.error('Không có stream để answer!')
       }
-      call.on('stream', remoteStream => {
-        setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
-      })
       call.on('close', () => {
         setRemoteStreams(prev => {
           const next = { ...prev }
