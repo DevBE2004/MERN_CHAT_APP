@@ -25,7 +25,7 @@ const VideoCallChat = () => {
 
   const [micEnabled, setMicEnabled] = useState(false)
   const [camEnabled, setCamEnabled] = useState(false)
-  const [speakerEnabled, setSpeakerEnabled] = useState(false)
+  const [speakerEnabled, setSpeakerEnabled] = useState(true)
 
   /* -------------------- GET MEDIA -------------------- */
   useEffect(() => {
