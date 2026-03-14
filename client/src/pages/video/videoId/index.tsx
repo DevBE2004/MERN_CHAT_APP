@@ -66,49 +66,45 @@ const VideoCallChat = () => {
     })
   }, [peer, stream])
 
-  /* -------------------- START CALL -------------------- */
-
+  /* -------------------- START / ACCEPT CALL -------------------- */
   useEffect(() => {
-    if (!socket || !isPeerReady || !peer) return
-    socket.emit('call:start', { chatId, peerId })
-  }, [socket, isPeerReady, peer, chatId, peerId])
+    if (!socket || !peer || !stream || !isPeerReady) return
+
+    const params = new URLSearchParams(window.location.search)
+    const callerPeerId = params.get('callerPeerId')
+
+    if (callerPeerId) {
+      socket.emit('call:accept', { chatId, peerId })
+    } else {
+      socket.emit('call:start', { chatId, peerId })
+    }
+  }, [isPeerReady, stream])
 
   /* -------------------- SOCKET EVENTS -------------------- */
-
   useEffect(() => {
     if (!socket || !peer || !stream) return
 
-    const handleAccepted = ({ peerId }: { peerId: string }) => {
-      const call = peer.call(peerId, stream)
+    const handleAccepted = ({ peerId: remotePeerId }: { peerId: string }) => {
+      console.log('Đối phương đã chấp nhận, tiến hành gọi Peer tới:', remotePeerId)
+
+      const call = peer.call(remotePeerId, stream)
 
       call.on('stream', remoteStream => {
         setRemoteStreams(prev => ({
           ...prev,
-          [peerId]: remoteStream,
+          [remotePeerId]: remoteStream,
         }))
-      })
-
-      call.on('close', () => {
-        setRemoteStreams(prev => {
-          const next = { ...prev }
-          delete next[peerId]
-          return next
-        })
       })
     }
 
-    const handleRejected = () => navigate('/chat/' + chatId)
-
-    const handleEnded = () => endCall()
-
     socket.on('call:accepted', handleAccepted)
-    socket.on('call:rejected', handleRejected)
-    socket.on('call:ended', handleEnded)
+    socket.on('call:rejected', () => navigate('/chat/' + chatId))
+    socket.on('call:ended', () => endCall())
 
     return () => {
       socket.off('call:accepted', handleAccepted)
-      socket.off('call:rejected', handleRejected)
-      socket.off('call:ended', handleEnded)
+      socket.off('call:rejected')
+      socket.off('call:ended')
     }
   }, [socket, peer, stream])
 

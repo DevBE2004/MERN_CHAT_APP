@@ -14,7 +14,7 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
   const { name, subheading, avatar, isOnline, isGroup } = getOtherUserAndGroup(chat, currentUserId)
 
   return (
-    <div className='flex items-center justify-between'>
+    <div className='flex items-center justify-between dark:bg-[#19191c]'>
       <div
         className='sticky top-0
     flex items-center gap-5 border-b border-border

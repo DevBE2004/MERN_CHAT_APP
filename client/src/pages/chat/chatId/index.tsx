@@ -67,18 +67,18 @@ const SingleChat = () => {
   }, [chatId, socket])
 
   const handleAccept = (call: { chatId: string; peerId: string }) => {
-    socket?.emit('call:accept', {
-      chatId: call.chatId,
-      peerId: call.peerId,
-    })
+    // socket?.emit('call:accept', {
+    //   chatId: call.chatId,
+    //   peerId: call.peerId,
+    // })
 
-    navigate(`/video/${call.chatId}`)
-
-    setActiveCalls(prev => {
-      const next = { ...prev }
-      delete next[call.peerId]
-      return next
-    })
+    // navigate(`/video/${call.chatId}`)
+    navigate(`/video/${call.chatId}?callerPeerId=${call.peerId}`)
+    // setActiveCalls(prev => {
+    //   const next = { ...prev }
+    //   delete next[call.peerId]
+    //   return next
+    // })
   }
 
   const handleReject = (peerId: string) => {
