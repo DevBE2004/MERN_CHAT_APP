@@ -47,14 +47,15 @@ const VideoCallChat = () => {
     if (!peer || !stream) return
 
     peer.on('call', call => {
-      call.answer(stream)
-
-      call.on('stream', remoteStream => {
-        setRemoteStreams(prev => ({
-          ...prev,
-          [call.peer]: remoteStream,
-        }))
-      })
+      if (stream) {
+        call.answer(stream)
+        call.on('stream', remoteStream => {
+          setRemoteStreams(prev => ({
+            ...prev,
+            [call.peer]: remoteStream,
+          }))
+        })
+      }
 
       call.on('close', () => {
         setRemoteStreams(prev => {
@@ -65,7 +66,6 @@ const VideoCallChat = () => {
       })
     })
   }, [peer, stream])
-  console.log(remoteStreams)
   /* -------------------- START / ACCEPT CALL -------------------- */
   useEffect(() => {
     if (!socket || !peer || !stream || !isPeerReady) return

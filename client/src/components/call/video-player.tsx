@@ -7,28 +7,28 @@ interface Props {
 }
 
 const VideoPlayer = ({ stream, peerId, className }: Props) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   console.log(peerId)
 
-  const setVideoRef = (node: HTMLVideoElement | null) => {
-    videoRef.current = node
-    if (node && stream) {
-      node.srcObject = stream
-      node.play().catch(e => console.error('Video play error:', e))
-    }
-  }
-
   useEffect(() => {
-    // Nếu stream thay đổi, gán lại srcObject cho ref hiện tại
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream
-      videoRef.current.play().catch(e => console.error('Video play error:', e))
+    const video = videoRef.current
+    if (video && stream) {
+      video.srcObject = stream
+
+      // Quan trọng: Chỉ gọi play sau khi metadata đã load
+      video.onloadedmetadata = () => {
+        video.play().catch(e => console.error('Video play error:', e))
+      }
+    }
+
+    return () => {
+      if (video) video.srcObject = null
     }
   }, [stream])
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border ${className}`}>
-      <video ref={setVideoRef} autoPlay playsInline muted className='w-full h-full object-cover' />
+    <div className={`relative overflow-hidden rounded-xl border bg-black ${className}`}>
+      <video ref={videoRef} autoPlay playsInline muted className='w-full h-full object-cover' />
     </div>
   )
 }
