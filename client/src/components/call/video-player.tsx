@@ -7,27 +7,27 @@ interface Props {
 }
 
 const VideoPlayer = ({ stream, peerId, className }: Props) => {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  const setVideoRef = (node: HTMLVideoElement | null) => {
+    videoRef.current = node
+    if (node && stream) {
+      node.srcObject = stream
+      node.play().catch(e => console.error('Video play error:', e))
+    }
+  }
 
   useEffect(() => {
-    if (stream) {
-      const tracks = stream.getTracks()
-      console.log('--- DEBUG STREAM ---')
-      console.log('Peer ID:', peerId)
-      console.log('Tổng số tracks:', tracks.length)
-      tracks.forEach((t, i) => console.log(`Track ${i}:`, t.kind, '| Enabled:', t.enabled))
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play().catch(e => console.error('Video play error:', e))
-      }
+    // Nếu stream thay đổi, gán lại srcObject cho ref hiện tại
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream
+      videoRef.current.play().catch(e => console.error('Video play error:', e))
     }
-  }, [stream, peerId])
+  }, [stream])
 
-  console.log(videoRef)
   return (
     <div className={`relative overflow-hidden rounded-xl border ${className}`}>
-      <video ref={videoRef} autoPlay playsInline className='w-full h-full object-cover' />
+      <video ref={setVideoRef} autoPlay playsInline muted className='w-full h-full object-cover' />
     </div>
   )
 }
