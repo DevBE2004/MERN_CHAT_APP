@@ -151,7 +151,7 @@ const VideoCallChat = () => {
   }, [socket, chatId, stream, peer, navigate])
 
   /* -------------------- UI -------------------- */
-  console.log({ localVideoRef, remoteStreams })
+
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
       <div className='grid w-full h-full gap-2 p-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
