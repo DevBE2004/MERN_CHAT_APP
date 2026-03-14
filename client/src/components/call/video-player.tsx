@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 interface Props {
   stream: MediaStream
   peerId: string
-
   className?: string
 }
 
@@ -14,16 +13,13 @@ const VideoPlayer = ({ stream, peerId, className }: Props) => {
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream
+
+      videoRef.current.play().catch(e => console.error('Video play error:', e))
     }
   }, [stream])
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl border
-      bg-gray-100 border-gray-200
-      dark:bg-black dark:border-zinc-800
-      ${className}`}
-    >
+    <div className={`relative overflow-hidden rounded-xl border ${className}`}>
       <video ref={videoRef} autoPlay playsInline className='w-full h-full object-cover' />
     </div>
   )
