@@ -14,7 +14,7 @@ const VideoPlayer = ({ stream, peerId, className }: Props) => {
     if (videoRef.current && stream) {
       console.log(`Gán stream cho ${peerId}`)
       videoRef.current.srcObject = stream
-      // Thêm đoạn này để ép trình duyệt nhận diện luồng
+
       videoRef.current.load()
       videoRef.current.play().catch(e => console.error('Play error:', e))
     }

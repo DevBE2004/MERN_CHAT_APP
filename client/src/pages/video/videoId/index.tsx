@@ -6,6 +6,7 @@ import { usePeer } from '@/hooks/use-peer'
 import { useSocket } from '@/hooks/use-socket'
 import { getMediaStream } from '@/utils/media'
 import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX } from 'lucide-react'
+import { MediaConnection } from 'peerjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -44,18 +45,14 @@ const VideoCallChat = () => {
   useEffect(() => {
     if (!peer) return
 
-    peer.on('call', call => {
-      if (streamRef.current) {
-        call.answer(streamRef.current)
+    const handleCall = (call: MediaConnection) => {
+      call.answer(streamRef.current || undefined)
 
-        call.on('stream', remoteStream => {
-          console.log('Đã nhận được remote stream từ:', call.peer)
-          console.log('Remote tracks:', remoteStream.getTracks())
-          setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
-        })
-      } else {
-        console.error('Không có stream để answer!')
-      }
+      call.on('stream', (remoteStream: MediaStream) => {
+        console.log('Đã nhận được remote stream từ:', call.peer)
+        setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
+      })
+
       call.on('close', () => {
         setRemoteStreams(prev => {
           const next = { ...prev }
@@ -63,7 +60,13 @@ const VideoCallChat = () => {
           return next
         })
       })
-    })
+    }
+
+    peer.on('call', handleCall)
+
+    return () => {
+      peer.off('call', handleCall)
+    }
   }, [peer])
 
   /* -------------------- START / ACCEPT CALL -------------------- */
@@ -86,8 +89,6 @@ const VideoCallChat = () => {
     if (!socket || !peer) return
 
     const handleAccepted = ({ peerId: remotePeerId }: { peerId: string }) => {
-      console.log(streamRef)
-      console.log(peerId)
       if (streamRef.current) {
         const call = peer.call(remotePeerId, streamRef.current)
         call.on('stream', remoteStream => {
