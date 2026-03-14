@@ -8,13 +8,25 @@ interface Props {
 
 const VideoPlayer = ({ stream, peerId, className }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null)
-  console.log(peerId)
+  console.log({ peerId })
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream
+    const video = videoRef.current
+    if (video && stream) {
+      video.srcObject = stream
 
-      videoRef.current.play().catch(e => console.error('Video play error:', e))
+      // 1. Ép phát bằng cách thêm muted (Chrome chặn autoplay nếu có âm thanh)
+      video.muted = true
+
+      // 2. Lắng nghe sự kiện sẵn sàng
+      video.onloadedmetadata = () => {
+        video.play().catch(e => console.error('Video play error:', e))
+      }
+    }
+
+    // Cleanup để tránh memory leak
+    return () => {
+      if (video) video.srcObject = null
     }
   }, [stream])
 
