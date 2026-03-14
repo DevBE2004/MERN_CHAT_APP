@@ -86,6 +86,8 @@ const VideoCallChat = () => {
     if (!socket || !peer) return
 
     const handleAccepted = ({ peerId: remotePeerId }: { peerId: string }) => {
+      console.log(streamRef)
+      console.log(peerId)
       if (streamRef.current) {
         const call = peer.call(remotePeerId, streamRef.current)
         call.on('stream', remoteStream => {
