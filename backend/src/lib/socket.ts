@@ -2,11 +2,13 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import * as cookie from 'cookie'
 import { Server as HTTPServer } from 'http'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 import { Server, type Socket } from 'socket.io'
 import { Env } from '../config/env.config'
 import { pubClient, subClient } from '../config/redis.config'
-import UserModel from '../models/user.model'
 import { validateChatParticipant } from '../services/chat.service'
+import { initCall, updateCall, updateParticipantMessage } from '../services/message.service'
+import { getUserById } from '../services/user.service'
 
 interface AuthenticatedSocket extends Socket {
   userId?: string
@@ -58,10 +60,10 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     }
 
     //register socket for the user
-    await pubClient.set(`${REDIS_ONLINE_KEY}:${userId}`, newSocketId)
+    await pubClient.hset(REDIS_ONLINE_KEY, userId, newSocketId)
 
-    const keys = await pubClient.keys(`${REDIS_ONLINE_KEY}:*`)
-    const allOnlineIds = keys.map(k => k.replace(`${REDIS_ONLINE_KEY}:`, ''))
+    const allOnlineIds = await pubClient.hkeys('online_users')
+
     io?.emit('online:users', allOnlineIds)
 
     //create personnal room for user
@@ -88,40 +90,62 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     //call
     socket.on('call:start', async ({ chatId, peerId }: { chatId: string; peerId: string }) => {
       //nhận peerID => các member
-      const user = await UserModel.findById(socket.userId).select('name avatar')
+      await initCall({ chatId, sender: userId })
+      const user = await getUserById(userId)
+      const messageId = new mongoose.Types.ObjectId()
+
       socket.to(`chat:${chatId}`).emit('call:incoming', {
         chatId,
         peerId,
         callerName: user?.name,
         callerAvatar: user?.avatar,
+        messageId,
       })
     })
-    socket.on('call:accept', ({ chatId, peerId }: { chatId: string; peerId: string }) => {
-      socket.to(`chat:${chatId}`).emit('call:accepted', {
+    socket.on(
+      'call:accept',
+      async ({
         chatId,
         peerId,
-      })
-    })
+        messageId,
+      }: {
+        chatId: string
+        peerId: string
+        messageId: string
+      }) => {
+        await updateParticipantMessage(messageId, userId)
+        socket.to(`chat:${chatId}`).emit('call:accepted', {
+          chatId,
+          peerId,
+        })
+      },
+    )
     socket.on('call:reject', ({ chatId }: { chatId: string }) => {
       socket.to(`chat:${chatId}`).emit('call:rejected', {
         chatId,
       })
     })
-    socket.on('call:end', ({ chatId }: { chatId: string }) => {
-      socket.to(`chat:${chatId}`).emit('call:ended', {
+    socket.on(
+      'call:end',
+      async ({
         chatId,
-      })
-    })
+        messageId,
+        duration,
+      }: {
+        chatId: string
+        duration: number
+        messageId: string
+      }) => {
+        await updateCall(messageId, duration)
+        socket.to(`chat:${chatId}`).emit('call:ended', {
+          chatId,
+        })
+      },
+    )
 
     socket.on('disconnect', async () => {
-      const currentStoredSocketId = await pubClient.get(`${REDIS_ONLINE_KEY}:${userId}`)
-
-      if (currentStoredSocketId === newSocketId) {
-        await pubClient.del(`${REDIS_ONLINE_KEY}:${userId}`)
-      }
-
-      const keys = await pubClient.keys(`${REDIS_ONLINE_KEY}:*`)
-      const currentOnlineUsers = keys.map(k => k.replace(`${REDIS_ONLINE_KEY}:`, ''))
+      await pubClient.hdel('online_users', userId)
+      const currentOnlineUsers = await pubClient.hkeys('online_users')
       io?.emit('online:users', currentOnlineUsers)
 
       console.log('socket disconnected', {
@@ -147,11 +171,11 @@ export const emitNewChatToParticpants = (participantIds: string[] = [], chat: an
 export const emitNewMessageToChatRoom = async (senderId: string, chatId: string, message: any) => {
   const io = getIO()
 
-  const senderSocketId = await pubClient.get(`${REDIS_ONLINE_KEY}:${senderId}`)
+  const senderSocketId = await pubClient.hget('online_users', senderId)
 
   console.log(senderId, 'senderId')
   console.log(senderSocketId, 'sender socketid exist')
-  console.log('All online users:', await pubClient.keys(REDIS_ONLINE_KEY))
+  console.log('All online users:', await pubClient.hkeys(REDIS_ONLINE_KEY))
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`).except(senderSocketId).emit('message:new', message)

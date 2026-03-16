@@ -16,10 +16,27 @@ export const sendMessageService = async (
     chatId: string
     content?: string
     image?: string
-    replyToId?: string
+    replyTo?: any
+    type?: string
+    participantsCall?: mongoose.Types.ObjectId[]
+    duration?: number
+    startedAt?: Date
+    endedAt?: Date
+    newMessageId: string
   },
 ) => {
-  const { chatId, content, image, replyToId } = body
+  const {
+    chatId,
+    content,
+    image,
+    replyTo,
+    type,
+    participantsCall,
+    duration,
+    startedAt,
+    endedAt,
+    newMessageId,
+  } = body
 
   const chat = await ChatModel.findOne({
     _id: chatId,
@@ -29,16 +46,14 @@ export const sendMessageService = async (
   })
   if (!chat) throw new BadRequestException('Chat not found or unauthorized')
 
-  if (replyToId) {
+  if (replyTo) {
     const replyMessage = await MessageModel.findOne({
-      _id: replyToId,
+      _id: replyTo,
       chatId,
     })
     if (!replyMessage) throw new NotFoundException('Reply message not found')
   }
   const senderInfo = await UserModel.findById(userId).select('name avatar')
-  const newMessageId = new mongoose.Types.ObjectId()
-
   const optimisticMessage = {
     _id: newMessageId,
     chatId: chatId,
@@ -49,7 +64,12 @@ export const sendMessageService = async (
       avatar: senderInfo?.avatar || '',
     },
     image: image || null,
-    replyTo: replyToId,
+    replyTo: replyTo,
+    type,
+    participantsCall,
+    duration,
+    startedAt,
+    endedAt,
     createdAt: new Date(),
     updatedAt: new Date(),
     __v: 0,
@@ -75,10 +95,70 @@ export const sendMessageService = async (
 
   emitNotificationToUsers(allParticipantIds, payload)
 
-  await mq.send(optimisticMessage)
+  await mq.send({ ...optimisticMessage, replyTo: replyTo?._id })
 
   return {
     userMessage: optimisticMessage,
     chat,
   }
+}
+
+export const updateParticipantMessage = async (messageId: string, userId: string) => {
+  return await MessageModel.findByIdAndUpdate(
+    messageId,
+    { $addToSet: { participantsCall: userId } },
+    { new: true },
+  )
+}
+
+export const initCall = async ({
+  chatId,
+  sender,
+  type = 'CALL',
+  participantsCall = [],
+  duration = 0,
+  startedAt = Date.now(),
+  endedAt = Date.now(),
+}: {
+  chatId: string
+  sender: string
+  type?: string
+  participantsCall?: string[]
+  duration?: number
+  startedAt?: any
+  endedAt?: any
+}) => {
+  return await MessageModel.create({
+    chatId,
+    sender,
+    type,
+    participantsCall,
+    duration,
+    startedAt,
+    endedAt,
+  })
+}
+
+export const updateCall = async (
+  messageId: string,
+  duration: number,
+  // chatId: string,
+  // userId: string,
+) => {
+  // const chat = await ChatModel.findOne({
+  //   _id: chatId,
+  //   participants: {
+  //     $in: [userId],
+  //   },
+  // })
+  // if (!chat) throw new BadRequestException('Chat not found or unauthorized')
+
+  // const allParticipantIds = chat.participants.map(id => id.toString())
+  // emitLastMessageToParticipants(allParticipantIds, chatId, 'Cuộc gọi.')
+
+  return await MessageModel.findByIdAndUpdate(
+    messageId,
+    { duration, endedAt: Date.now() },
+    { new: true },
+  )
 }

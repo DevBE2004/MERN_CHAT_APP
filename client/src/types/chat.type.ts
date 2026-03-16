@@ -19,6 +19,11 @@ export type MessageType = {
   sender: UserType | null
   replyTo: MessageType | null
   chatId: string
+  type: string
+  participantsCall: string[]
+  duration: number
+  startedAt: Date
+  endedAt: Date
   createdAt: string
   updatedAt: string
   //only frontend

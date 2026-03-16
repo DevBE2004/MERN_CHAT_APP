@@ -1,19 +1,17 @@
-import { Request, Response } from "express";
-import { asyncHandler } from "../middlewares/asyncHandler.middleware";
-import { sendMessageSchema } from "../validators/message.validator";
-import { HTTPSTATUS } from "../config/http.config";
-import { sendMessageService } from "../services/message.service";
+import { Request, Response } from 'express'
+import { HTTPSTATUS } from '../config/http.config'
+import { asyncHandler } from '../middlewares/asyncHandler.middleware'
+import { sendMessageService } from '../services/message.service'
+import { sendMessageSchema } from '../validators/message.validator'
 
-export const sendMessageController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.user?._id;
-    const body = sendMessageSchema.parse(req.body);
+export const sendMessageController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?._id
 
-    const result = await sendMessageService(userId, body);
+  const body = sendMessageSchema.parse(req.body)
+  const result = await sendMessageService(userId, body)
 
-    return res.status(HTTPSTATUS.OK).json({
-      message: "Message sent successfully",
-      ...result,
-    });
-  }
-);
+  return res.status(HTTPSTATUS.OK).json({
+    message: 'Message sent successfully',
+    ...result,
+  })
+})

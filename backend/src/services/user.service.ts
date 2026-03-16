@@ -11,3 +11,7 @@ export const getUsersService = async (userId: string) => {
 
   return users
 }
+
+export const getUserById = async (userId: string) => {
+  return await UserModel.findById(userId)
+}

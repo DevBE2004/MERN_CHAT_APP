@@ -16,5 +16,5 @@ data.txt
 build/
 dist/
 
-
+jobs.txt
 dump.rdb

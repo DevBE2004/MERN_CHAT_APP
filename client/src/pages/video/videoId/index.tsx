@@ -4,9 +4,10 @@ import { useAuth } from '@/hooks/use-auth'
 import useChatId from '@/hooks/use-chat-id'
 import { usePeer } from '@/hooks/use-peer'
 import { useSocket } from '@/hooks/use-socket'
+import { formatTime } from '@/utils/helper'
 import { getMediaStream } from '@/utils/media'
 import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX } from 'lucide-react'
-import { MediaConnection } from 'peerjs'
+import type { MediaConnection } from 'peerjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -16,16 +17,20 @@ const VideoCallChat = () => {
   const { socket } = useSocket()
   const chatId = useChatId()
   const navigate = useNavigate()
+  const params = new URLSearchParams(window.location.search)
+  const callerPeerId = params.get('callerPeerId')
+  const messageId = params.get('messageId')
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
 
-  // Dùng ref để đảm bảo stream luôn có giá trị mới nhất cho các callback của PeerJS
   const streamRef = useRef<MediaStream | null>(null)
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
 
   const [micEnabled, setMicEnabled] = useState(false)
   const [camEnabled, setCamEnabled] = useState(false)
-  const [speakerEnabled, setSpeakerEnabled] = useState(true)
+  const [speakerEnabled, setSpeakerEnabled] = useState(false)
+
+  const [seconds, setSeconds] = useState<number>(0)
 
   /* -------------------- GET MEDIA -------------------- */
   useEffect(() => {
@@ -71,14 +76,10 @@ const VideoCallChat = () => {
 
   /* -------------------- START / ACCEPT CALL -------------------- */
   useEffect(() => {
-    // Chỉ thực hiện khi peer đã sẵn sàng
     if (!socket || !isPeerReady) return
 
-    const params = new URLSearchParams(window.location.search)
-    const callerPeerId = params.get('callerPeerId')
-
-    if (callerPeerId) {
-      socket.emit('call:accept', { chatId, peerId })
+    if (callerPeerId && messageId) {
+      socket.emit('call:accept', { chatId, peerId, messageId })
     } else {
       socket.emit('call:start', { chatId, peerId })
     }
@@ -132,16 +133,36 @@ const VideoCallChat = () => {
   }
 
   const endCall = useCallback(() => {
-    socket?.emit('call:end', { chatId })
+    socket?.emit('call:end', { chatId, messageId })
     streamRef.current?.getTracks().forEach(t => t.stop())
     peer?.destroy()
     navigate('/chat/' + chatId)
   }, [socket, chatId, peer, navigate])
 
-  /* -------------------- UI -------------------- */
+  // time
+  useEffect(() => {
+    const hasRemoteUser = Object.keys(remoteStreams).length > 0
+
+    if (!hasRemoteUser) {
+      setSeconds(0)
+      return
+    }
+    const startTime = Date.now()
+
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const diffInSeconds = Math.floor((now - startTime) / 1000)
+      setSeconds(diffInSeconds)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
+      <div className='absolute top-6 left-1/2 -translate-x-1/2 z-20 bg-black/50 px-4 py-1 rounded-full border border-white/10'>
+        <p className='text-white font-mono text-lg'>{formatTime(seconds)}</p>
+      </div>
       <div className='absolute inset-0 z-0'>
         {Object.entries(remoteStreams).map(([pId, rStream]) => (
           <VideoPlayer key={pId} peerId={pId} stream={rStream} className='w-full h-full' />
@@ -160,9 +181,10 @@ const VideoCallChat = () => {
         autoPlay
         muted
         playsInline
-        className='absolute bottom-28 right-4 w-40 h-52 md:w-60 md:h-80 object-cover rounded-xl border-2 border-white/20 shadow-2xl z-10'
+        className='absolute top-4 right-4 w-40 h-52 md:w-60 md:h-80 object-cover rounded-xl border-2 border-white/20 shadow-2xl z-10'
       />
       {/* Controls */}
+
       <div
         className='
         absolute bottom-20 left-1/2 -translate-x-1/2

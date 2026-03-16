@@ -13,7 +13,19 @@ export const startWorker = async () => {
   console.log('Worker đang đợi tin nhắn...')
 
   await mq.consume(async (data, msg) => {
-    const { messageId, chatId, sender, content, image, replyToId } = data
+    const {
+      messageId,
+      chatId,
+      sender,
+      content,
+      image,
+      replyTo,
+      type,
+      participantsCall,
+      duration,
+      startedAt,
+      endedAt,
+    } = data
     let imageUrl = null
 
     if (image) {
@@ -26,7 +38,12 @@ export const startWorker = async () => {
       sender: sender._id,
       content,
       image: imageUrl,
-      replyTo: replyToId || null,
+      replyTo: replyTo || null,
+      type,
+      participantsCall,
+      duration,
+      startedAt,
+      endedAt,
     })
 
     await ChatModel.findByIdAndUpdate(

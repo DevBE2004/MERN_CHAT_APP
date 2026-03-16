@@ -20,6 +20,7 @@ const SingleChat = () => {
   const { user } = useAuth()
 
   const [replyTo, setReplyTo] = useState<MessageType | null>(null)
+  const [messageId, setmessageId] = useState<string>('')
 
   const [activeCalls, setActiveCalls] = useState<
     Record<
@@ -53,11 +54,13 @@ const SingleChat = () => {
       peerId: string
       callerName: string
       callerAvatar: string
+      messageId: string
     }) => {
       setActiveCalls(prev => ({
         ...prev,
         [data.peerId]: data,
       }))
+      setmessageId(data?.messageId)
     }
     socket.on('call:incoming', handleIncomingCall)
 
@@ -67,7 +70,7 @@ const SingleChat = () => {
   }, [chatId, socket])
 
   const handleAccept = (call: { chatId: string; peerId: string }) => {
-    navigate(`/video/${call.chatId}?callerPeerId=${call.peerId}`)
+    navigate(`/video/${call.chatId}?callerPeerId=${call.peerId}&messageId=${messageId}`)
     setActiveCalls(prev => {
       const next = { ...prev }
       delete next[call.peerId]
