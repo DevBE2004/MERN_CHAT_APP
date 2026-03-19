@@ -58,40 +58,8 @@ const ChatMessageBody = memo(({ message, onReply }: Props) => {
 
       <div className={contentWrapperClass}>
         <div className={cn('flex items-center gap-1', isCurrentUser && 'flex-row-reverse')}>
-          {message.type === 'CHAT' ? (
+          {message.type === 'CALL' ? (
             <div className={messageClass}>
-              {/* {Header} */}
-
-              <div className='flex items-center gap-2 mb-0.5 pb-1'>
-                <span className='text-xs font-semibold'>{senderName}</span>
-                <span className='text-[11px] text-gray-700 dark:text-gray-300'>
-                  {formatChatTime(message?.createdAt)}
-                </span>
-              </div>
-
-              {/* ReplyToBox */}
-              {message.replyTo && (
-                <div className={replyBoxClass}>
-                  <h5 className='font-medium'>{replySendername}</h5>
-                  <p
-                    className='font-normal text-muted-foreground
-                 max-w-[250px]  truncate
-                '
-                  >
-                    {message?.replyTo?.content || (message?.replyTo?.image ? '📷 Photo' : '')}
-                  </p>
-                </div>
-              )}
-
-              {message?.image && (
-                <img src={message?.image || ''} alt='' className='rounded-lg max-w-xs' />
-              )}
-
-              {message.content && <p>{message.content}</p>}
-            </div>
-          ) : (
-            <div className={messageClass}>
-              {/* 2. Header (Avatar/Name/Time) - Giữ nguyên cho đồng bộ */}
               <div className='flex items-center gap-2 mb-0.5 pb-1'>
                 <span className='text-xs font-semibold'>{senderName}</span>
                 <span className='text-[11px] text-gray-700 dark:text-gray-300'>
@@ -108,6 +76,39 @@ const ChatMessageBody = memo(({ message, onReply }: Props) => {
                   <span className='text-xs text-muted-foreground'>Không có phản hồi</span>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className={messageClass}>
+              <div className='flex items-center gap-2 mb-0.5 pb-1'>
+                <span className='text-xs font-semibold'>{senderName}</span>
+                <span className='text-[11px] text-gray-700 dark:text-gray-300'>
+                  {formatChatTime(message?.createdAt)}
+                </span>
+              </div>
+
+              {message.replyTo && (
+                <div className={replyBoxClass}>
+                  <h5 className='font-medium'>{replySendername}</h5>
+                  <p
+                    className='font-normal text-muted-foreground
+                 max-w-[250px]  truncate
+                '
+                  >
+                    {message?.replyTo?.content || (message?.replyTo?.image ? '📷 Photo' : '')}
+                  </p>
+                </div>
+              )}
+
+              {message?.image && (
+                <img
+                  src={message?.image || ''}
+                  alt='attachment'
+                  className='rounded-lg w-full max-w-[200px] sm:max-w-xs cursor-pointer hover:opacity-90 transition-opacity object-cover'
+                  onClick={() => window.open(message.image!, '_blank')}
+                />
+              )}
+
+              {message.content && <p>{message.content}</p>}
             </div>
           )}
 

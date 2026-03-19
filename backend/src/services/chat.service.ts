@@ -94,6 +94,7 @@ export const getSingleChatService = async (
   if (!chat) throw new BadRequestException('Chat not found or access denied')
 
   const skip = (page - 1) * limit
+  const totalMessages = await MessageModel.countDocuments({ chatId })
   const messages = await MessageModel.find({ chatId })
     .sort({ createdAt: -1 }) // Lấy từ mới nhất trước
     .skip(skip)
@@ -109,6 +110,7 @@ export const getSingleChatService = async (
   return {
     chat,
     messages: messages.reverse(),
+    hasMore: skip + messages.length < totalMessages,
   }
 }
 

@@ -12,8 +12,9 @@ interface Props {
 const ChatBody = ({ chatId, messages, onReply }: Props) => {
   const { socket } = useSocket()
   const { addNewMessage } = useChat()
-  const bottomRef = useRef<HTMLDivElement | null>(null)
 
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  //socket
   useEffect(() => {
     if (!chatId) return
     if (!socket) return
@@ -25,13 +26,6 @@ const ChatBody = ({ chatId, messages, onReply }: Props) => {
       socket.off('message:new', handleNewMessage)
     }
   }, [socket, chatId, addNewMessage])
-
-  useEffect(() => {
-    if (!messages.length) return
-    bottomRef.current?.scrollIntoView({
-      behavior: 'smooth',
-    })
-  }, [messages])
 
   return (
     <div className='w-full max-w-6xl mx-auto flex flex-col px-3 py-2'>
