@@ -11,6 +11,8 @@ resources:
 
 images:
   - name: leanhtu23131/chat-backend
+    newName: leanhtu23131/chat-backend
     newTag: latest
   - name: leanhtu23131/chat-frontend
+    newName: leanhtu23131/chat-frontend
     newTag: latest
