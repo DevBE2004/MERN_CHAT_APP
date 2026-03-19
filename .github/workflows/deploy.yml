@@ -28,7 +28,7 @@ jobs:
       # 3. BUILD & PUSH FRONTEND
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./client
+          docker build --build-arg VITE_API_URL=http://localhost:32000 -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
 
       # 4. THIẾT LẬP KUBERNETES CONTEXT
@@ -56,5 +56,9 @@ jobs:
       - name: Deploy
         run: |
           kubectl apply -k k8s --validate=false
+
+          kubectl rollout restart deployment backend-deployment
           kubectl rollout status deployment backend-deployment
+
+          kubectl rollout restart deployment frontend-deployment
           kubectl rollout status deployment frontend-deployment
