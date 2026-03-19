@@ -32,6 +32,7 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
 
       # 4. THIẾT LẬP KUBERNETES CONTEXT
+      # Đảm bảo Secret KUBE_CONFIG đã được lấy bằng lệnh: kubectl config view --raw
       - name: Set Kubernetes Context
         uses: azure/k8s-set-context@v3
         with:
@@ -39,14 +40,19 @@ jobs:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       # 5. CẬP NHẬT IMAGE TAG TRONG KUSTOMIZE
-      # Lưu ý: Đảm bảo máy đã cài kustomize hoặc dùng lệnh thay thế
+      # Sử dụng lệnh thay thế chuỗi trực tiếp bằng PowerShell để tránh lỗi 'kustomize not found'
       - name: Update image tag
+        shell: powershell
         run: |
           cd k8s
-          kustomize edit set image leanhtu23131/chat-backend=${{ secrets.DOCKER_USERNAME }}/chat-backend:latest
-          kustomize edit set image leanhtu23131/chat-frontend=${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
+          $backendImg = "${{ secrets.DOCKER_USERNAME }}/chat-backend:latest"
+          $frontendImg = "${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest"
 
-      # 6. DEPLOY LÊN CLUSTER
+          # Cập nhật file kustomization.yaml trực tiếp
+          (Get-Content kustomization.yaml) -replace 'newName: .*chat-backend', "newName: ${{ secrets.DOCKER_USERNAME }}/chat-backend" | Set-Content kustomization.yaml
+          (Get-Content kustomization.yaml) -replace 'newName: .*chat-frontend', "newName: ${{ secrets.DOCKER_USERNAME }}/chat-frontend" | Set-Content kustomization.yaml
+
+      # 6. DEPLOY LÊN CLUSTER (Minikube / Docker Desktop)
       - name: Deploy
         run: |
           kubectl apply -k k8s --validate=false
