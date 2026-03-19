@@ -18,20 +18,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set image tag
-        run: echo "IMAGE_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
-
       # --- BUILD & PUSH BACKEND ---
       - name: Build and Push Backend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG} ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:${{ github.sha }} ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:${{ github.sha }}
 
       # --- BUILD & PUSH FRONTEND ---
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG} ./client
-          docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${{ github.sha }} ./client
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${{ github.sha }}
 
       # --- SET K8S CONTEXT ---
       - name: Set Kubernetes Context
@@ -44,8 +41,8 @@ jobs:
       - name: Update image tag
         run: |
           cd k8s
-          kustomize edit set image leanhtu23131/chat-backend=${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG}
-          kustomize edit set image leanhtu23131/chat-frontend=${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG}
+          kustomize edit set image leanhtu23131/chat-backend=${{ secrets.DOCKER_USERNAME }}/chat-backend:${{ github.sha }}
+          kustomize edit set image leanhtu23131/chat-frontend=${{ secrets.DOCKER_USERNAME }}/chat-frontend:${{ github.sha }}
 
       # --- DEPLOY ---
       - name: Deploy
