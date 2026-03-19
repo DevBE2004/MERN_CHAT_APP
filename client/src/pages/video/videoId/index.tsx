@@ -153,6 +153,7 @@ const VideoCallChat = () => {
   }
 
   const endCall = useCallback(() => {
+    console.log({ duration: seconds })
     socket?.emit('call:end', { chatId, messageId, duration: seconds })
     streamRef.current?.getTracks().forEach(t => t.stop())
     peer?.destroy()
