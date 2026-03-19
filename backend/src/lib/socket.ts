@@ -90,9 +90,9 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     //call
     socket.on('call:start', async ({ chatId, peerId }: { chatId: string; peerId: string }) => {
       //nhận peerID => các member
-      await initCall({ chatId, sender: userId })
-      const user = await getUserById(userId)
       const messageId = new mongoose.Types.ObjectId()
+      await initCall({ chatId, sender: userId, messageId })
+      const user = await getUserById(userId)
 
       socket.to(`chat:${chatId}`).emit('call:incoming', {
         chatId,

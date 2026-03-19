@@ -112,6 +112,7 @@ export const updateParticipantMessage = async (messageId: string, userId: string
 }
 
 export const initCall = async ({
+  messageId,
   chatId,
   sender,
   type = 'CALL',
@@ -120,6 +121,7 @@ export const initCall = async ({
   startedAt = Date.now(),
   endedAt = Date.now(),
 }: {
+  messageId: mongoose.Types.ObjectId
   chatId: string
   sender: string
   type?: string
@@ -129,6 +131,7 @@ export const initCall = async ({
   endedAt?: any
 }) => {
   return await MessageModel.create({
+    _id: messageId,
     chatId,
     sender,
     type,
