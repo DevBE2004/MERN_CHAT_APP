@@ -2,6 +2,7 @@ import SignIn from '@/pages/auth/sign-in'
 import SignUp from '@/pages/auth/sign-up'
 import Chat from '@/pages/chat'
 import SingleChat from '@/pages/chat/chatId'
+import Profile from '@/pages/profile/userId'
 import VideoCallChat from '@/pages/video/videoId'
 
 export const AUTH_ROUTES = {
@@ -13,6 +14,7 @@ export const PROTECTED_ROUTES = {
   CHAT: '/chat',
   SINGLE_CHAT: '/chat/:chatId',
   VIDEO_ID: '/video/:chatId',
+  PROFILE_ID: '/profile/:userId',
 }
 
 export const authRoutesPaths = [
@@ -40,6 +42,12 @@ export const videoPaths = [
   {
     path: PROTECTED_ROUTES.VIDEO_ID,
     element: <VideoCallChat />,
+  },
+]
+export const userPaths = [
+  {
+    path: PROTECTED_ROUTES.PROFILE_ID,
+    element: <Profile />,
   },
 ]
 

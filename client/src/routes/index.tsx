@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout'
 import BaseLayout from '@/layouts/base-layout'
 import { Route, Routes } from 'react-router-dom'
 import RouteGuard from './route-guard'
-import { authRoutesPaths, protectedRoutesPaths, videoPaths } from './routes'
+import { authRoutesPaths, protectedRoutesPaths, userPaths, videoPaths } from './routes'
 
 const AppRoutes = () => {
   return (
@@ -23,6 +23,9 @@ const AppRoutes = () => {
           ))}
         </Route>
         {videoPaths.map(route => (
+          <Route path={route.path} element={route.element} />
+        ))}
+        {userPaths.map(route => (
           <Route path={route.path} element={route.element} />
         ))}
       </Route>
