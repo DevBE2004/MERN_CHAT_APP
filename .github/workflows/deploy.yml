@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Deploy to Kubernetes
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,32 +18,38 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # --- PHẦN BACKEND ---
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      # --- BUILD & PUSH BACKEND ---
       - name: Build and Push Backend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG} ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG}
 
-      # --- PHẦN FRONTEND ---
+      # --- BUILD & PUSH FRONTEND ---
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest ./client
-          docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG} ./client
+          docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG}
 
-      # --- THIẾT LẬP KẾT NỐI K8S ---
+      # --- SET K8S CONTEXT ---
       - name: Set Kubernetes Context
         uses: azure/k8s-set-context@v3
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-      # --- DEPLOY ---
-      - name: Deploy to Kubernetes
+      # --- UPDATE IMAGE TAG IN KUSTOMIZE ---
+      - name: Update image tag
         run: |
-          kubectl apply -k k8s --validate=false
+          cd k8s
+          kustomize edit set image leanhtu23131/chat-backend=${{ secrets.DOCKER_USERNAME }}/chat-backend:${IMAGE_TAG}
+          kustomize edit set image leanhtu23131/chat-frontend=${{ secrets.DOCKER_USERNAME }}/chat-frontend:${IMAGE_TAG}
 
-          kubectl rollout restart deployment backend-deployment
-          kubectl rollout restart deployment frontend-deployment
-
+      # --- DEPLOY ---
+      - name: Deploy
+        run: |
+          kubectl apply -k k8s
           kubectl rollout status deployment backend-deployment
           kubectl rollout status deployment frontend-deployment

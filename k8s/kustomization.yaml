@@ -5,6 +5,7 @@ resources:
   - secret.yaml
   - mongodb.yaml
   - redis.yaml
+  - rabbitmq.yaml
   - deployment.yaml
   - service.yaml
 
