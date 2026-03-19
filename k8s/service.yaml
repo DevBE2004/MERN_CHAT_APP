@@ -1,82 +1,24 @@
 # --- FRONTEND SERVICE ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: frontend-deployment
+  name: frontend-service
 spec:
-  replicas: 2
   selector:
-    matchLabels:
-      app: chat-frontend
-  template:
-    metadata:
-      labels:
-        app: chat-frontend
-    spec:
-      containers:
-        - name: frontend-container
-          image: leanhtu23131/chat-frontend
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 80
+    app: chat-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+
 ---
 # --- BACKEND SERVICE ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: backend-deployment
+  name: backend-service
 spec:
-  replicas: 2
   selector:
-    matchLabels:
-      app: chat-backend
-  template:
-    metadata:
-      labels:
-        app: chat-backend
-    spec:
-      containers:
-        - name: backend-container
-          image: leanhtu23131/chat-backend
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 5000
-          envFrom:
-            - secretRef:
-                name: chat-app-secrets
-
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5000
-            initialDelaySeconds: 15
-            periodSeconds: 5
-
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 5000
-            initialDelaySeconds: 30
-            periodSeconds: 10
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: chat-worker
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: chat-worker
-  template:
-    metadata:
-      labels:
-        app: chat-worker
-    spec:
-      containers:
-        - name: worker-container
-          image: leanhtu23131/chat-backend
-          command: ['node', 'dist/worker.js']
-          envFrom:
-            - secretRef:
-                name: chat-app-secrets
+    app: chat-backend
+  ports:
+    - port: 5000
+      targetPort: 5000
