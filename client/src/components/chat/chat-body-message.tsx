@@ -1,8 +1,8 @@
 import { useAuth } from '@/hooks/use-auth'
-import { formatChatTime } from '@/lib/helper'
+import { formatChatTime, formatDuration } from '@/lib/helper'
 import { cn } from '@/lib/utils'
 import type { MessageType } from '@/types/chat.type'
-import { PhoneOff, ReplyIcon } from 'lucide-react'
+import { Phone, PhoneOff, ReplyIcon } from 'lucide-react'
 import { memo } from 'react'
 import AvatarWithBadge from '../avatar-with-badge'
 import { Button } from '../ui/button'
@@ -67,15 +67,29 @@ const ChatMessageBody = memo(({ message, onReply }: Props) => {
                 </span>
               </div>
 
-              <div className='flex items-center gap-3 py-1'>
-                <div className='p-2 rounded-full bg-red-500/10 text-red-500'>
-                  <PhoneOff size={18} />
+              {message.duration ? (
+                <div className='flex items-center gap-3 py-1'>
+                  <div className='p-2 rounded-full bg-red-500/10 text-green-500'>
+                    <Phone size={18} />
+                  </div>
+                  <div className='flex flex-col'>
+                    <span className='font-semibold text-sm'>Cuộc gọi đi/đến</span>
+                    <span className='text-xs text-muted-foreground'>
+                      {formatDuration(message.duration)}
+                    </span>
+                  </div>
                 </div>
-                <div className='flex flex-col'>
-                  <span className='font-semibold text-sm'>Cuộc gọi nhỡ</span>
-                  <span className='text-xs text-muted-foreground'>Không có phản hồi</span>
+              ) : (
+                <div className='flex items-center gap-3 py-1'>
+                  <div className='p-2 rounded-full bg-red-500/10 text-red-500'>
+                    <PhoneOff size={18} />
+                  </div>
+                  <div className='flex flex-col'>
+                    <span className='font-semibold text-sm'>Cuộc gọi nhỡ</span>
+                    <span className='text-xs text-muted-foreground'>Không có phản hồi</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className={messageClass}>
