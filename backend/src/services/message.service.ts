@@ -157,13 +157,9 @@ export const initCall = async ({
 }
 
 export const updateCall = async (messageId: string, duration: number) => {
-  const message = await MessageModel.findById(messageId)
-
-  if (!message) {
-    throw new NotFoundException('Call message không tồn tại')
-  }
-  message.duration = duration
-  message.endedAt = new Date()
-
-  return await message.save()
+  return await MessageModel.findByIdAndUpdate(
+    messageId,
+    { duration, endedAt: Date.now() },
+    { new: true },
+  )
 }
