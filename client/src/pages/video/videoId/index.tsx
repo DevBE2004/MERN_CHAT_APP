@@ -31,6 +31,7 @@ const VideoCallChat = () => {
   const [camEnabled, setCamEnabled] = useState(true)
   const [speakerEnabled, setSpeakerEnabled] = useState(true)
   const [seconds, setSeconds] = useState<number>(0)
+  const secondsRef = useRef(0)
 
   /* -------------------- 1. LẤY MEDIA TRƯỚC -------------------- */
   useEffect(() => {
@@ -113,6 +114,7 @@ const VideoCallChat = () => {
     if (!hasRemoteUser) {
       callStartTimeRef.current = null
       setSeconds(0)
+
       return
     }
 
@@ -122,7 +124,9 @@ const VideoCallChat = () => {
 
     const interval = setInterval(() => {
       if (callStartTimeRef.current) {
-        setSeconds(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+        const s = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        setSeconds(s)
+        secondsRef.current = s
       }
     }, 1000)
 
@@ -154,7 +158,7 @@ const VideoCallChat = () => {
 
   const endCall = useCallback(() => {
     console.log({ duration: seconds })
-    socket?.emit('call:end', { chatId, messageId, duration: seconds })
+    socket?.emit('call:end', { chatId, messageId, duration: secondsRef.current })
     streamRef.current?.getTracks().forEach(t => t.stop())
     peer?.destroy()
     navigate('/chat/' + chatId)
