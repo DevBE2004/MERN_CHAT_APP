@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import VideoPlayer from '@/components/call/video-player'
 import { useAuth } from '@/hooks/use-auth'
 import useChatId from '@/hooks/use-chat-id'
@@ -9,7 +8,7 @@ import { getMediaStream } from '@/utils/media'
 import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX } from 'lucide-react'
 import type { MediaConnection } from 'peerjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const VideoCallChat = () => {
   const { user } = useAuth()
@@ -17,13 +16,15 @@ const VideoCallChat = () => {
   const { socket } = useSocket()
   const chatId = useChatId()
   const navigate = useNavigate()
-  const params = new URLSearchParams(window.location.search)
-  const callerPeerId = params.get('callerPeerId')
-  const messageId = params.get('messageId')
+  const [searchParams] = useSearchParams()
+
+  const callerPeerId = searchParams.get('callerPeerId')
+  const messageId = searchParams.get('messageId')
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const callStartTimeRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const secondsRef = useRef(0)
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
   const [isStreamReady, setIsStreamReady] = useState(false)
@@ -31,9 +32,8 @@ const VideoCallChat = () => {
   const [camEnabled, setCamEnabled] = useState(true)
   const [speakerEnabled, setSpeakerEnabled] = useState(true)
   const [seconds, setSeconds] = useState<number>(0)
-  const secondsRef = useRef(0)
 
-  /* -------------------- 1. LẤY MEDIA TRƯỚC -------------------- */
+  // 1. LẤY MEDIA
   useEffect(() => {
     let mounted = true
     getMediaStream().then(s => {
@@ -42,7 +42,6 @@ const VideoCallChat = () => {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = s
       }
-
       setMicEnabled(s.getAudioTracks()[0]?.enabled ?? false)
       setCamEnabled(s.getVideoTracks()[0]?.enabled ?? false)
       setIsStreamReady(true)
@@ -54,13 +53,31 @@ const VideoCallChat = () => {
     }
   }, [])
 
-  /* -------------------- 2. NHẬN CUỘC GỌI -------------------- */
+  // HÀM KẾT THÚC CUỘC GỌI
+  const endCall = useCallback(() => {
+    const finalDuration = secondsRef.current
+    console.log('Ending call with duration:', finalDuration)
+
+    socket?.emit('call:end', {
+      chatId,
+      messageId,
+      duration: finalDuration,
+    })
+
+    // Dọn dẹp
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    if (peer && !peer.destroyed) {
+      peer.destroy()
+    }
+    navigate('/chat/' + chatId)
+  }, [socket, chatId, messageId, peer, navigate])
+
+  // 2. NHẬN CUỘC GỌI
   useEffect(() => {
     if (!peer || !isStreamReady) return
 
     const handleCall = (call: MediaConnection) => {
       call.answer(streamRef.current!)
-
       call.on('stream', (remoteStream: MediaStream) => {
         setRemoteStreams(prev => ({ ...prev, [call.peer]: remoteStream }))
       })
@@ -72,7 +89,7 @@ const VideoCallChat = () => {
     }
   }, [peer, isStreamReady])
 
-  /* -------------------- 3. BẮT ĐẦU/CHẤP NHẬN (Sau khi có stream) -------------------- */
+  // 3. SIGNALING (START/ACCEPT)
   useEffect(() => {
     if (!socket || !isPeerReady || !isStreamReady) return
 
@@ -81,15 +98,14 @@ const VideoCallChat = () => {
     } else {
       socket.emit('call:start', { chatId, peerId })
     }
-  }, [isPeerReady, isStreamReady, socket])
+  }, [isPeerReady, isStreamReady, socket, chatId, peerId, callerPeerId, messageId])
 
-  /* -------------------- 4. XỬ LÝ SOCKET EVENTS -------------------- */
+  // 4. SOCKET EVENTS
   useEffect(() => {
     if (!socket || !peer || !isStreamReady) return
 
     const handleAccepted = ({ peerId: remotePeerId }: { peerId: string }) => {
       if (streamRef.current) {
-        // Thực hiện call và gửi stream của mình đi
         const call = peer.call(remotePeerId, streamRef.current)
         call.on('stream', remoteStream => {
           setRemoteStreams(prev => ({ ...prev, [remotePeerId]: remoteStream }))
@@ -99,22 +115,23 @@ const VideoCallChat = () => {
 
     socket.on('call:accepted', handleAccepted)
     socket.on('call:rejected', () => navigate('/chat/' + chatId))
-    socket.on('call:ended', () => endCall())
+    socket.on('call:ended', endCall)
 
     return () => {
       socket.off('call:accepted', handleAccepted)
       socket.off('call:rejected')
-      socket.off('call:ended')
+      socket.off('call:ended', endCall)
     }
-  }, [socket, peer, isStreamReady])
+  }, [socket, peer, isStreamReady, endCall, navigate, chatId])
 
-  /* -------------------- BIẾN ĐẾM THỜI GIAN -------------------- */
+  // 5. BỘ ĐẾM THỜI GIAN
   useEffect(() => {
     const hasRemoteUser = Object.keys(remoteStreams).length > 0
+
     if (!hasRemoteUser) {
       callStartTimeRef.current = null
       setSeconds(0)
-
+      secondsRef.current = 0
       return
     }
 
@@ -124,16 +141,16 @@ const VideoCallChat = () => {
 
     const interval = setInterval(() => {
       if (callStartTimeRef.current) {
-        const s = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
-        setSeconds(s)
-        secondsRef.current = s
+        const elapsed = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        setSeconds(elapsed)
+        secondsRef.current = elapsed // Cập nhật ref liên tục
       }
     }, 1000)
 
     return () => clearInterval(interval)
   }, [remoteStreams])
 
-  /* -------------------- CONTROLS -------------------- */
+  // CONTROLS
   const toggleMic = () => {
     if (!streamRef.current) return
     const newState = !micEnabled
@@ -152,35 +169,37 @@ const VideoCallChat = () => {
     const newState = !speakerEnabled
     setSpeakerEnabled(newState)
     document.querySelectorAll('video').forEach(v => {
-      if (!v.hasAttribute('data-local')) v.muted = !newState
+      if (!v.hasAttribute('data-local')) {
+        ;(v as HTMLVideoElement).muted = !newState
+      }
     })
   }
 
-  const endCall = useCallback(() => {
-    console.log({ duration: seconds })
-    socket?.emit('call:end', { chatId, messageId, duration: secondsRef.current })
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    peer?.destroy()
-    navigate('/chat/' + chatId)
-  }, [socket, chatId, peer])
-
   return (
     <div className='fixed inset-0 bg-black flex items-center justify-center'>
+      {/* Timer */}
       <div className='absolute top-6 left-1/2 -translate-x-1/2 z-20 bg-black/50 px-4 py-1 rounded-full border border-white/10'>
         <p className='text-white font-mono text-lg'>{formatTime(seconds)}</p>
       </div>
 
+      {/* Remote Videos */}
       <div className='absolute inset-0 z-0'>
         {Object.entries(remoteStreams).map(([pId, rStream]) => (
-          <VideoPlayer key={pId} peerId={pId} stream={rStream} className='w-full h-full' />
+          <VideoPlayer
+            key={pId}
+            peerId={pId}
+            stream={rStream}
+            className='w-full h-full object-cover'
+          />
         ))}
         {Object.keys(remoteStreams).length === 0 && (
-          <div className='flex items-center justify-center h-full text-white/50'>
+          <div className='flex items-center justify-center h-full text-white/50 animate-pulse'>
             Đang chờ đối phương...
           </div>
         )}
       </div>
 
+      {/* Local Video */}
       <video
         data-local
         ref={localVideoRef}
@@ -190,16 +209,17 @@ const VideoCallChat = () => {
         className='absolute top-4 right-4 w-40 h-52 md:w-60 md:h-80 object-cover rounded-xl border-2 border-white/20 shadow-2xl z-10'
       />
 
+      {/* Control Bar */}
       <div className='absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/40 backdrop-blur-md px-6 py-3 rounded-full shadow-lg'>
         <button
           onClick={toggleMic}
-          className='w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white'
+          className={`w-12 h-12 flex items-center justify-center rounded-full ${micEnabled ? 'bg-white/10' : 'bg-red-500'} text-white`}
         >
           {micEnabled ? <Mic size={20} /> : <MicOff size={20} />}
         </button>
         <button
           onClick={toggleCamera}
-          className='w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white'
+          className={`w-12 h-12 flex items-center justify-center rounded-full ${camEnabled ? 'bg-white/10' : 'bg-red-500'} text-white`}
         >
           {camEnabled ? <Video size={20} /> : <VideoOff size={20} />}
         </button>
@@ -213,7 +233,7 @@ const VideoCallChat = () => {
 
       <button
         onClick={endCall}
-        className='absolute bottom-6 bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full shadow-lg'
+        className='absolute bottom-6 bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-full font-semibold shadow-lg transition-all active:scale-95'
       >
         Kết thúc
       </button>
