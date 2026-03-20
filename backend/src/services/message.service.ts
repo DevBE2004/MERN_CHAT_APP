@@ -104,11 +104,25 @@ export const sendMessageService = async (
 }
 
 export const updateParticipantMessage = async (messageId: string, userId: string) => {
-  return await MessageModel.findByIdAndUpdate(
-    messageId,
-    { $addToSet: { participantsCall: userId } },
-    { new: true },
-  )
+  const message = await MessageModel.findById(messageId)
+
+  if (!message) {
+    throw new NotFoundException('Message không tồn tại')
+  }
+
+  if (!message.participantsCall) {
+    message.participantsCall = []
+  }
+
+  const userObjectId = new mongoose.Types.ObjectId(userId)
+
+  const isExist = message.participantsCall.some(id => id.toString() === userObjectId.toString())
+
+  if (!isExist) {
+    message.participantsCall.push(userObjectId as any)
+  }
+
+  return await message.save()
 }
 
 export const initCall = async ({
@@ -142,26 +156,14 @@ export const initCall = async ({
   })
 }
 
-export const updateCall = async (
-  messageId: string,
-  duration: number,
-  // chatId: string,
-  // userId: string,
-) => {
-  // const chat = await ChatModel.findOne({
-  //   _id: chatId,
-  //   participants: {
-  //     $in: [userId],
-  //   },
-  // })
-  // if (!chat) throw new BadRequestException('Chat not found or unauthorized')
+export const updateCall = async (messageId: string, duration: number) => {
+  const message = await MessageModel.findById(messageId)
 
-  // const allParticipantIds = chat.participants.map(id => id.toString())
-  // emitLastMessageToParticipants(allParticipantIds, chatId, 'Cuộc gọi.')
+  if (!message) {
+    throw new NotFoundException('Call message không tồn tại')
+  }
+  message.duration = duration
+  message.endedAt = new Date()
 
-  return await MessageModel.findByIdAndUpdate(
-    messageId,
-    { duration, endedAt: Date.now() },
-    { new: true },
-  )
+  return await message.save()
 }

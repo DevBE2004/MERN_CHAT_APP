@@ -46,13 +46,11 @@ export const startWorker = async () => {
       endedAt,
     })
 
-    await ChatModel.findByIdAndUpdate(
-      chatId,
-      {
-        $set: { lastMessage: newMessage._id },
-      },
-      { new: true },
-    )
+    const chat = await ChatModel.findById(chatId)
+    if (chat) {
+      chat.lastMessage = newMessage._id as any
+      await chat.save()
+    }
   })
 }
 
