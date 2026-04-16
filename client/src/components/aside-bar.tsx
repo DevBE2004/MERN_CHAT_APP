@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/use-auth'
-import { isUserOnline } from '@/lib/helper'
+import { useSocket } from '@/hooks/use-socket'
 import { PROTECTED_ROUTES } from '@/routes/routes'
 import { Moon, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -20,7 +20,8 @@ const AsideBar = () => {
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
-  const isOnline = isUserOnline(user?._id)
+  const { onlineUsers } = useSocket()
+  const isOnline = onlineUsers.includes(user?._id.toString() || '')
 
   return (
     <aside
