@@ -15,9 +15,11 @@ export const usePeer = (userId: string) => {
       secure: import.meta.env.VITE_PEER_SECURE === 'true',
       config: {
         iceServers: [
-          {
-            urls: 'stun:stun.relay.metered.ca:80',
-          },
+          // STUN public (backup)
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+
+          // TURN Metered (chính)
           {
             urls: 'turn:global.relay.metered.ca:80',
             username: '890568cbdb2be070186e3add',
