@@ -114,6 +114,20 @@ export const getSingleChatService = async (
   }
 }
 
+// tìm kiếm trong elastic Search
+export const getSingleChatEsService = async (
+  chatId: string,
+  userId: string,
+  page: number = 1,
+  limit: number = 20,
+) => {
+  return {
+    // chat,
+    // messages: messages.reverse(),
+    // hasMore: skip + messages.length < totalMessages,
+  }
+}
+
 export const validateChatParticipant = async (chatId: string, userId: string) => {
   const chat = await ChatModel.findOne({
     _id: chatId,

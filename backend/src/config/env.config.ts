@@ -7,6 +7,8 @@ export const Env = {
   SECRET_KEY: getEnv('SECRET_KEY', 'secret_jwt'),
   JWT_EXPIRES_IN: getEnv('JWT_EXPIRES_IN', '15m'),
   FRONTEND_ORIGIN: getEnv('FRONTEND_ORIGIN', 'http://localhost:5173'),
+  ELASTIC_API_KEY: getEnv('ELASTIC_API_KEY'),
+  ELASTIC_NODE_URL: getEnv('ELASTIC_NODE_URL'),
 
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: getEnv('CLOUDINARY_CLOUD_NAME'),
